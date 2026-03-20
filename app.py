@@ -4,6 +4,7 @@ import json
 import os
 import base64
 import requests
+from telegram_inbox import get_telegram_messages
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
@@ -159,9 +160,22 @@ else:
     service = get_gmail_service(st.session_state.token)
     col1, col2, col3 = st.columns(3)
 
-    if st.button("🔄 Fetch & Classify Emails", type="primary"):
-        with st.spinner("Fetching your emails..."):
-            emails = get_emails_from_service(service)
+    if st.button("🔄 Fetch & Classify Messages", type="primary"):
+        all_messages = []
+
+    with st.spinner("Fetching your Gmail emails..."):
+        emails = get_emails_from_service(service)
+        for email in emails:
+            email['source'] = 'gmail'
+        all_messages.extend(emails)
+
+    telegram_token = st.secrets.get("TELEGRAM_BOT_TOKEN", "")
+    if telegram_token:
+        with st.spinner("Fetching your Telegram messages..."):
+            telegram_msgs = get_telegram_messages(telegram_token)
+            all_messages.extend(telegram_msgs)
+
+        emails = all_messages
 
         important = []
         skipped = []
@@ -199,8 +213,10 @@ else:
                     "newsletter": "🟡"
                 }
                 icon = cat_colors.get(result['category'], "⚪")
+                source = email.get('source', 'gmail')
+                source_icon = "📧" if source == 'gmail' else "✈️"
                 st.markdown(f"### {icon} {email['subject']}")
-                st.markdown(f"**From:** {email['sender']}")
+                st.markdown(f"**From:** {email['sender']} {source_icon} {source.upper()}")
                 st.markdown(f"**Category:** {result['category'].upper()}")
                 st.markdown(f"**Why important:** {result['reason']}")
                 with st.expander("Show email body"):
