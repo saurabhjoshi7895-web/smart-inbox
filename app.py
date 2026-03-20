@@ -94,11 +94,30 @@ def get_emails_from_service(service, max_results=20):
     return emails
 
 def login_with_google():
+    import json
+    import tempfile
+
+    client_config = {
+        "installed": {
+            "client_id": st.secrets["GOOGLE_CLIENT_ID"],
+            "client_secret": st.secrets["GOOGLE_CLIENT_SECRET"],
+            "redirect_uris": ["http://localhost"],
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token"
+        }
+    }
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        json.dump(client_config, f)
+        temp_path = f.name
+
     flow = InstalledAppFlow.from_client_secrets_file(
-        'credentials.json',
+        temp_path,
         scopes=SCOPES
     )
     creds = flow.run_local_server(port=8502)
+    os.unlink(temp_path)
+
     return {
         'token': creds.token,
         'refresh_token': creds.refresh_token,
