@@ -13,14 +13,14 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 def get_client():
-    api_key = st.secrets.get("ANTHROPIC_API_KEY", os.environ.get("ANTHROPIC_API_KEY", ""))
+    api_key = st.secrets.get("ANTHROPIC_API_KEY", "")
     return anthropic.Anthropic(api_key=api_key)
 
 def get_redirect_uri():
     return st.secrets.get("REDIRECT_URI", "http://localhost:8501")
 
-def make_flow():
-    creds_config = {
+def get_creds_config():
+    return {
         "web": {
             "client_id": st.secrets["GOOGLE_CLIENT_ID"],
             "client_secret": st.secrets["GOOGLE_CLIENT_SECRET"],
@@ -29,17 +29,6 @@ def make_flow():
             "token_uri": "https://oauth2.googleapis.com/token"
         }
     }
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-        json.dump(creds_config, f)
-        temp_path = f.name
-    flow = Flow.from_client_secrets_file(
-        temp_path,
-        scopes=SCOPES,
-        redirect_uri=get_redirect_uri()
-    )
-    os.unlink(temp_path)
-    flow.oauth2session.token_endpoint_auth_method = 'client_secret_post'
-    return flow
 
 def classify_email(email):
     client = get_client()
@@ -141,14 +130,33 @@ st.caption("AI-powered inbox that shows only what matters")
 
 if 'credentials' not in st.session_state:
     st.session_state.credentials = None
+if 'flow_state' not in st.session_state:
+    st.session_state.flow_state = None
+if 'code_verifier' not in st.session_state:
+    st.session_state.code_verifier = None
 
 params = st.query_params
+
 if 'code' in params and st.session_state.credentials is None:
     try:
-        flow = make_flow()
-        authorization_response = get_redirect_uri() + "?code=" + params['code']
-        if 'state' in params:
-            authorization_response += "&state=" + params['state']
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            json.dump(get_creds_config(), f)
+            temp_path = f.name
+
+        flow = Flow.from_client_secrets_file(
+            temp_path,
+            scopes=SCOPES,
+            redirect_uri=get_redirect_uri(),
+            state=st.session_state.flow_state
+        )
+        os.unlink(temp_path)
+
+        if st.session_state.code_verifier:
+            flow.code_verifier = st.session_state.code_verifier
+
+        authorization_response = get_redirect_uri() + "?" + "&".join(
+            [f"{k}={v}" for k, v in params.items()]
+        )
         flow.fetch_token(authorization_response=authorization_response)
         creds = flow.credentials
         st.session_state.credentials = {
@@ -159,6 +167,8 @@ if 'code' in params and st.session_state.credentials is None:
             'client_secret': creds.client_secret,
             'scopes': list(creds.scopes)
         }
+        st.session_state.flow_state = None
+        st.session_state.code_verifier = None
         st.query_params.clear()
         st.rerun()
     except Exception as e:
@@ -168,17 +178,33 @@ if st.session_state.credentials is None:
     st.markdown("### Welcome! Please login with your Google account.")
     st.markdown("Your emails stay private — we only read them to classify importance.")
     st.divider()
+
     try:
-        flow = make_flow()
-        auth_url, _ = flow.authorization_url(
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            json.dump(get_creds_config(), f)
+            temp_path = f.name
+
+        flow = Flow.from_client_secrets_file(
+            temp_path,
+            scopes=SCOPES,
+            redirect_uri=get_redirect_uri()
+        )
+        os.unlink(temp_path)
+
+        auth_url, state = flow.authorization_url(
             prompt='consent',
             access_type='offline',
             include_granted_scopes='true'
-            
         )
+
+        st.session_state.flow_state = state
+        if hasattr(flow, 'code_verifier'):
+            st.session_state.code_verifier = flow.code_verifier
+
         st.link_button("🔐 Login with Google", auth_url, type="primary")
     except Exception as e:
         st.error(f"Could not create login link: {e}")
+
 else:
     service = get_gmail_service(st.session_state.credentials)
     col1, col2, col3 = st.columns(3)
