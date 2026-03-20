@@ -163,39 +163,37 @@ else:
     if st.button("🔄 Fetch & Classify Messages", type="primary"):
         all_messages = []
 
-    with st.spinner("Fetching your Gmail emails..."):
-        emails = get_emails_from_service(service)
-        for email in emails:
-            email['source'] = 'gmail'
-        all_messages.extend(emails)
+        with st.spinner("Fetching your Gmail emails..."):
+            emails = get_emails_from_service(service)
+            for email in emails:
+                email['source'] = 'gmail'
+            all_messages.extend(emails)
 
-    telegram_token = st.secrets.get("TELEGRAM_BOT_TOKEN", "")
-    if telegram_token:
-        with st.spinner("Fetching your Telegram messages..."):
-            telegram_msgs = get_telegram_messages(telegram_token)
-            all_messages.extend(telegram_msgs)
-
-        emails = all_messages
+        telegram_token = st.secrets.get("TELEGRAM_BOT_TOKEN", "")
+        if telegram_token:
+            with st.spinner("Fetching your Telegram messages..."):
+                telegram_msgs = get_telegram_messages(telegram_token)
+                all_messages.extend(telegram_msgs)
 
         important = []
         skipped = []
         progress = st.progress(0)
         status = st.empty()
 
-        for i, email in enumerate(emails):
-            status.text(f"Classifying email {i+1} of {len(emails)}...")
+        for i, email in enumerate(all_messages):
+            status.text(f"Classifying message {i+1} of {len(all_messages)}...")
             result = classify_email(email)
             if result['importance'] == 'high':
                 important.append((email, result))
             else:
                 skipped.append((email, result))
-            progress.progress((i + 1) / len(emails))
+            progress.progress((i + 1) / len(all_messages))
 
         progress.empty()
         status.empty()
 
         with col1:
-            st.metric("Total Fetched", len(emails))
+            st.metric("Total Fetched", len(all_messages))
         with col2:
             st.metric("Important", len(important))
         with col3:
@@ -204,7 +202,7 @@ else:
         st.divider()
 
         if important:
-            st.subheader("✅ Important Emails")
+            st.subheader("✅ Important Messages")
             for email, result in important:
                 cat_colors = {
                     "work": "🔵",
@@ -219,17 +217,13 @@ else:
                 st.markdown(f"**From:** {email['sender']} {source_icon} {source.upper()}")
                 st.markdown(f"**Category:** {result['category'].upper()}")
                 st.markdown(f"**Why important:** {result['reason']}")
-                with st.expander("Show email body"):
+                with st.expander("Show message body"):
                     st.text(email['body'][:500])
                 st.divider()
         else:
-            st.info("No important emails found!")
+            st.info("No important messages found!")
 
         if skipped:
-            with st.expander(f"🗑️ See {len(skipped)} filtered out emails"):
+            with st.expander(f"🗑️ See {len(skipped)} filtered out messages"):
                 for email, result in skipped:
                     st.markdown(f"- **{email['subject']}** — {result['reason']}")
-
-    if st.button("Logout"):
-        st.session_state.token = None
-        st.rerun()
