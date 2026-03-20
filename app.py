@@ -173,8 +173,8 @@ if st.session_state.credentials is None:
         auth_url, _ = flow.authorization_url(
             prompt='consent',
             access_type='offline',
-            include_granted_scopes='true',
-            code_challenge_method=None
+            include_granted_scopes='true'
+            
         )
         st.link_button("🔐 Login with Google", auth_url, type="primary")
     except Exception as e:
