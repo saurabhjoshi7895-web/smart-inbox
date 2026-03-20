@@ -3,6 +3,7 @@ import anthropic
 import json
 import os
 import base64
+import tempfile
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
@@ -15,19 +16,29 @@ def get_client():
     api_key = st.secrets.get("ANTHROPIC_API_KEY", os.environ.get("ANTHROPIC_API_KEY", ""))
     return anthropic.Anthropic(api_key=api_key)
 
-def get_google_credentials():
-    return {
+def get_redirect_uri():
+    return st.secrets.get("REDIRECT_URI", "http://localhost:8501")
+
+def make_flow():
+    creds_config = {
         "web": {
             "client_id": st.secrets["GOOGLE_CLIENT_ID"],
             "client_secret": st.secrets["GOOGLE_CLIENT_SECRET"],
-            "redirect_uris": [st.secrets["REDIRECT_URI"]],
+            "redirect_uris": [get_redirect_uri()],
             "auth_uri": "https://accounts.google.com/o/oauth2/auth",
             "token_uri": "https://oauth2.googleapis.com/token"
         }
     }
-
-def get_redirect_uri():
-    return st.secrets.get("REDIRECT_URI", "http://localhost:8501")
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        json.dump(creds_config, f)
+        temp_path = f.name
+    flow = Flow.from_client_secrets_file(
+        temp_path,
+        scopes=SCOPES,
+        redirect_uri=get_redirect_uri()
+    )
+    os.unlink(temp_path)
+    return flow
 
 def classify_email(email):
     client = get_client()
@@ -130,20 +141,14 @@ st.caption("AI-powered inbox that shows only what matters")
 if 'credentials' not in st.session_state:
     st.session_state.credentials = None
 
-if 'code' in st.query_params and st.session_state.credentials is None:
+params = st.query_params
+if 'code' in params and st.session_state.credentials is None:
     try:
-        import tempfile
-        creds_config = get_google_credentials()
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            json.dump(creds_config, f)
-            temp_path = f.name
-        flow = Flow.from_client_secrets_file(
-            temp_path,
-            scopes=SCOPES,
-            redirect_uri=get_redirect_uri()
-        )
-        flow.fetch_token(code=st.query_params['code'])
-        os.unlink(temp_path)
+        flow = make_flow()
+        authorization_response = get_redirect_uri() + "?code=" + params['code']
+        if 'state' in params:
+            authorization_response += "&state=" + params['state']
+        flow.fetch_token(authorization_response=authorization_response)
         creds = flow.credentials
         st.session_state.credentials = {
             'token': creds.token,
@@ -162,23 +167,13 @@ if st.session_state.credentials is None:
     st.markdown("### Welcome! Please login with your Google account.")
     st.markdown("Your emails stay private — we only read them to classify importance.")
     st.divider()
-
     try:
-        import tempfile
-        creds_config = get_google_credentials()
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            json.dump(creds_config, f)
-            temp_path = f.name
-        flow = Flow.from_client_secrets_file(
-            temp_path,
-            scopes=SCOPES,
-            redirect_uri=get_redirect_uri()
+        flow = make_flow()
+        auth_url, _ = flow.authorization_url(
+            prompt='consent',
+            access_type='offline',
+            include_granted_scopes='true'
         )
-        authorization_response = f"{get_redirect_uri()}?code={st.query_params['code']}"
-        if 'state' in st.query_params:
-          authorization_response += f"&state={st.query_params['state']}"
-        flow.fetch_token(authorization_response=authorization_response)
-        os.unlink(temp_path)
         st.link_button("🔐 Login with Google", auth_url, type="primary")
     except Exception as e:
         st.error(f"Could not create login link: {e}")
