@@ -38,6 +38,7 @@ def make_flow():
         redirect_uri=get_redirect_uri()
     )
     os.unlink(temp_path)
+    flow.oauth2session.token_endpoint_auth_method = 'client_secret_post'
     return flow
 
 def classify_email(email):
@@ -173,6 +174,7 @@ if st.session_state.credentials is None:
             prompt='consent',
             access_type='offline',
             include_granted_scopes='true'
+            code_challenge_method=None
         )
         st.link_button("🔐 Login with Google", auth_url, type="primary")
     except Exception as e:
