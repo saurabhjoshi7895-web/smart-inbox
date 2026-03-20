@@ -174,11 +174,10 @@ if st.session_state.credentials is None:
             scopes=SCOPES,
             redirect_uri=get_redirect_uri()
         )
-        auth_url, _ = flow.authorization_url(
-            prompt='consent',
-            access_type='offline',
-            include_granted_scopes='true'
-        )
+        authorization_response = f"{get_redirect_uri()}?code={st.query_params['code']}"
+        if 'state' in st.query_params:
+          authorization_response += f"&state={st.query_params['state']}"
+        flow.fetch_token(authorization_response=authorization_response)
         os.unlink(temp_path)
         st.link_button("🔐 Login with Google", auth_url, type="primary")
     except Exception as e:
