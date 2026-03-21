@@ -115,32 +115,21 @@ def get_gmail_service(token):
     )
     return build('gmail', 'v1', credentials=creds)
 
-def get_initials(name):
-    clean = name.split('<')[0].strip()
-    parts = clean.split()
-    if len(parts) >= 2: return (parts[0][0] + parts[1][0]).upper()
-    elif len(parts) == 1 and len(parts[0]) >= 2: return parts[0][:2].upper()
-    return "??"
-
 st.set_page_config(page_title="Smart Inbox", page_icon="📬", layout="wide")
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-* {font-family: 'Inter', sans-serif !important;}
 section[data-testid="stSidebar"] > div {padding-top: 0 !important;}
 section[data-testid="stSidebar"] {background: #FAFAFA !important;}
 .block-container {padding-top: 1.5rem !important;}
-
 .card {
     border: 1px solid #F0F0F0;
     border-radius: 14px;
     padding: 14px 16px;
     margin-bottom: 10px;
     background: #fff;
-    transition: all 0.15s ease;
 }
-.card:hover {border-color: #E0E0E0; transform: translateY(-1px);}
+.card:hover {border-color: #E0E0E0;}
 .card-top {display:flex; align-items:center; gap:10px; margin-bottom:10px;}
 .app-icon {width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;}
 .icon-gmail {background:#FDECEA;}
@@ -157,29 +146,15 @@ section[data-testid="stSidebar"] {background: #FAFAFA !important;}
 .c-personal {background:#E8F5E9; color:#2E7D32;}
 .c-spam {background:#FFEBEE; color:#C62828;}
 .c-newsletter {background:#FFF8E1; color:#F57F17;}
-.filtered-box {
-    background:#FAFAFA; border:1px dashed #E8E8E8;
-    border-radius:12px; padding:14px; font-size:13px;
-    color:#bbb; text-align:center; margin-top:8px;
-}
-.page-header {
-    display:flex; align-items:center; justify-content:space-between;
-    margin-bottom:20px; padding-bottom:16px;
-    border-bottom:1px solid #F5F5F5;
-}
+.filtered-box {background:#FAFAFA; border:1px dashed #E8E8E8; border-radius:12px; padding:14px; font-size:13px; color:#bbb; text-align:center; margin-top:8px;}
+.page-header {display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #F5F5F5;}
 .empty-state {text-align:center; padding:80px 0;}
 .empty-icon {font-size:52px; margin-bottom:16px;}
 .empty-title {font-size:22px; font-weight:700; color:#111; margin-bottom:8px;}
 .empty-sub {font-size:14px; color:#bbb;}
-.sidebar-user {text-align:center; padding:20px 0 16px; border-bottom:1px solid #EFEFEF; margin-bottom:16px;}
-.user-av {width:54px; height:54px; border-radius:50%; background:#111; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; margin:0 auto 10px;}
-.user-name {font-size:14px; font-weight:700; color:#111;}
-.user-email {font-size:11px; color:#bbb; margin-top:2px;}
 .section-lbl {font-size:9px; font-weight:700; letter-spacing:0.12em; color:#ccc; margin-bottom:8px; padding-left:4px;}
-.ch-row {display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:8px; font-size:13px; color:#555; margin-bottom:2px;}
-.ch-on {background:#fff; border:1px solid #EFEFEF; font-weight:500; color:#111;}
-.ch-soon {font-size:9px; background:#F5F5F5; color:#bbb; padding:2px 7px; border-radius:8px; margin-left:auto;}
-.ch-on-badge {font-size:9px; background:#111; color:#fff; padding:2px 7px; border-radius:8px; margin-left:auto;}
+div[data-testid="stCheckbox"] label {font-size:13px !important; font-weight:500 !important; color:#111 !important;}
+div[data-testid="stCheckbox"] {padding: 4px 0 !important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -239,25 +214,57 @@ else:
 
     with st.sidebar:
         st.markdown("""
-<div class="sidebar-user">
-    <div class="user-av">SJ</div>
-    <div class="user-name">Saurabh Joshi</div>
-    <div class="user-email">saurabhjoshi7895@gmail.com</div>
+<div style="text-align:center;padding:20px 0 16px;border-bottom:1px solid #EFEFEF;margin-bottom:16px">
+    <div style="width:54px;height:54px;border-radius:50%;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin:0 auto 10px">SJ</div>
+    <div style="font-size:14px;font-weight:700;color:#111">Saurabh Joshi</div>
+    <div style="font-size:11px;color:#bbb;margin-top:2px">saurabhjoshi7895@gmail.com</div>
 </div>
 """, unsafe_allow_html=True)
 
         st.markdown('<div class="section-lbl">CHANNELS</div>', unsafe_allow_html=True)
 
-        show_gmail = st.toggle("Gmail", value=st.session_state.show_gmail)
-        show_telegram = st.toggle("Telegram", value=st.session_state.show_telegram)
+        col1, col2 = st.columns([4, 1])
+        with col1:
+            st.markdown("""
+<div style="display:flex;align-items:center;gap:8px;padding:6px 0">
+    <span style="width:26px;height:26px;background:#FDECEA;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:14px">📧</span>
+    <span style="font-size:13px;font-weight:500;color:#111">Gmail</span>
+</div>
+""", unsafe_allow_html=True)
+        with col2:
+            show_gmail = st.checkbox("", value=st.session_state.show_gmail, key="cb_gmail")
+
+        col1, col2 = st.columns([4, 1])
+        with col1:
+            st.markdown("""
+<div style="display:flex;align-items:center;gap:8px;padding:6px 0">
+    <span style="width:26px;height:26px;background:#E3F2FD;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:14px">✈️</span>
+    <span style="font-size:13px;font-weight:500;color:#111">Telegram</span>
+</div>
+""", unsafe_allow_html=True)
+        with col2:
+            show_telegram = st.checkbox("", value=st.session_state.show_telegram, key="cb_telegram")
+
         st.session_state.show_gmail = show_gmail
         st.session_state.show_telegram = show_telegram
 
         st.markdown("""
-<div style="margin:8px 0 16px;opacity:0.4">
-<div class="ch-row"><span>💬</span><span style="flex:1">WhatsApp</span><span class="ch-soon">Soon</span></div>
-<div class="ch-row"><span>💼</span><span style="flex:1">LinkedIn</span><span class="ch-soon">Soon</span></div>
-<div class="ch-row"><span>🐦</span><span style="flex:1">Twitter / X</span><span class="ch-soon">Soon</span></div>
+<div style="margin:8px 0 16px;opacity:0.38">
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;color:#aaa">
+        <span style="width:26px;height:26px;background:#E8F5E9;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:14px">💬</span>
+        <span style="flex:1">WhatsApp</span>
+        <span style="font-size:9px;background:#F5F5F5;color:#bbb;padding:2px 7px;border-radius:8px">Soon</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;color:#aaa">
+        <span style="width:26px;height:26px;background:#E8F0FE;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:14px">💼</span>
+        <span style="flex:1">LinkedIn</span>
+        <span style="font-size:9px;background:#F5F5F5;color:#bbb;padding:2px 7px;border-radius:8px">Soon</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;color:#aaa">
+        <span style="width:26px;height:26px;background:#F5F5F5;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:14px">🐦</span>
+        <span style="flex:1">Twitter / X</span>
+        <span style="font-size:9px;background:#F5F5F5;color:#bbb;padding:2px 7px;border-radius:8px">Soon</span>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -346,11 +353,10 @@ else:
             sender = msg['sender'].split('<')[0].strip()[:45]
             subject = msg.get('subject') or 'No subject'
             preview = msg.get('body','')[:160]
-
-            icon_cls = "icon-gmail" if source == 'gmail' else "icon-telegram"
-            icon_emoji = "📧" if source == 'gmail' else "✈️"
-            pill_cls = "sp-g" if source == 'gmail' else "sp-t"
-            pill_lbl = "📧 Gmail" if source == 'gmail' else "✈️ Telegram"
+            icon_cls = "icon-gmail" if source=='gmail' else "icon-telegram"
+            icon_emoji = "📧" if source=='gmail' else "✈️"
+            pill_cls = "sp-g" if source=='gmail' else "sp-t"
+            pill_lbl = "📧 Gmail" if source=='gmail' else "✈️ Telegram"
 
             st.markdown(f"""
 <div class="card">
