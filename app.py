@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import anthropic
 import json
 import base64
@@ -185,8 +186,15 @@ if st.session_state.token is None:
     auth_url = get_auth_url()
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
-        st.markdown(f"""
-<div style="background:#0A0A0A;border-radius:20px;padding:48px 32px 40px;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden">
+        components.html(f"""
+<!DOCTYPE html>
+<html>
+<head><style>
+* {{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}}
+a {{text-decoration:none}}
+</style></head>
+<body style="background:#0A0A0A">
+<div style="background:#0A0A0A;padding:48px 32px 40px;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;min-height:900px">
 
   <div style="position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:500px;height:400px;background:radial-gradient(ellipse,rgba(234,67,53,0.12) 0%,transparent 65%);pointer-events:none"></div>
 
@@ -522,7 +530,8 @@ else:
         <span>·</span>
         <span>{result['reason']}</span>
     </div>
-</div>""", unsafe_allow_html=True)
+</div></body></html>
+""", height=950, scrolling=False)
 
             with st.expander("Show full message"):
                 st.text(msg.get('body',''))
