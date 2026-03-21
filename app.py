@@ -13,9 +13,6 @@ from telegram_user import get_personal_messages
 
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
 
-GMAIL_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#EA4335"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-.561.289-1.078.766-1.376l10.598-6.547a1.636 1.636 0 0 1 1.272 0l10.598 6.547c.477.298.766.815.766 1.376z"/></svg>'
-TELEGRAM_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#229ED9"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>'
-
 def get_client():
     return anthropic.Anthropic(api_key=st.secrets.get("ANTHROPIC_API_KEY", ""))
 
@@ -118,40 +115,71 @@ def get_gmail_service(token):
     )
     return build('gmail', 'v1', credentials=creds)
 
+def get_initials(name):
+    clean = name.split('<')[0].strip()
+    parts = clean.split()
+    if len(parts) >= 2: return (parts[0][0] + parts[1][0]).upper()
+    elif len(parts) == 1 and len(parts[0]) >= 2: return parts[0][:2].upper()
+    return "??"
+
 st.set_page_config(page_title="Smart Inbox", page_icon="📬", layout="wide")
 
 st.markdown("""
 <style>
-section[data-testid="stSidebar"] > div {padding-top:1rem}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+* {font-family: 'Inter', sans-serif !important;}
+section[data-testid="stSidebar"] > div {padding-top: 0 !important;}
+section[data-testid="stSidebar"] {background: #FAFAFA !important;}
+.block-container {padding-top: 1.5rem !important;}
+
 .card {
-    border:1px solid rgba(128,128,128,0.12);
-    border-radius:14px;
-    padding:14px 16px;
-    margin-bottom:10px;
-    background:var(--background-color);
+    border: 1px solid #F0F0F0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    background: #fff;
+    transition: all 0.15s ease;
 }
-.card:hover{border-color:rgba(128,128,128,0.3)}
-.card-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.app-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.icon-gmail{background:#FDECEA}
-.icon-telegram{background:#E3F2FD}
-.card-meta{flex:1;min-width:0}
-.card-sender{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.card-time{font-size:10px;color:rgba(128,128,128,0.6);margin-top:1px}
-.src-pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;flex-shrink:0}
-.sp-g{background:#FDECEA;color:#C0392B}
-.sp-t{background:#E3F2FD;color:#0D6EAA}
-.card-subject{font-size:14px;font-weight:600;margin-bottom:4px;line-height:1.3}
-.card-preview{font-size:12px;color:rgba(128,128,128,0.8);line-height:1.6;margin-bottom:10px}
-.card-footer{display:flex;align-items:center;gap:6px;padding-top:8px;border-top:1px solid rgba(128,128,128,0.08);font-size:11px;color:rgba(128,128,128,0.6)}
-.cat{font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px}
-.c-work{background:#EDE7F6;color:#512DA8}
-.c-personal{background:#E8F5E9;color:#2E7D32}
-.c-spam{background:#FFEBEE;color:#C62828}
-.c-newsletter{background:#FFF8E1;color:#F57F17}
-.filtered-box{background:rgba(128,128,128,0.03);border:1px dashed rgba(128,128,128,0.18);border-radius:12px;padding:14px;font-size:13px;color:rgba(128,128,128,0.55);text-align:center;margin-top:4px}
-.sidebar-ch{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;margin-bottom:2px;font-size:13px}
-.ch-icon-box{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card:hover {border-color: #E0E0E0; transform: translateY(-1px);}
+.card-top {display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+.app-icon {width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;}
+.icon-gmail {background:#FDECEA;}
+.icon-telegram {background:#E3F2FD;}
+.card-sender {font-size:13px; font-weight:600; color:#111; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.src-pill {font-size:10px; font-weight:600; padding:3px 10px; border-radius:20px; flex-shrink:0;}
+.sp-g {background:#FDECEA; color:#C0392B;}
+.sp-t {background:#E3F2FD; color:#0D6EAA;}
+.card-subject {font-size:14px; font-weight:600; color:#111; margin-bottom:4px; line-height:1.4;}
+.card-preview {font-size:12px; color:#999; line-height:1.6; margin-bottom:10px;}
+.card-footer {display:flex; align-items:center; gap:6px; padding-top:8px; border-top:1px solid #F5F5F5; font-size:11px; color:#bbb;}
+.cat {font-size:10px; font-weight:500; padding:2px 8px; border-radius:8px;}
+.c-work {background:#EDE7F6; color:#512DA8;}
+.c-personal {background:#E8F5E9; color:#2E7D32;}
+.c-spam {background:#FFEBEE; color:#C62828;}
+.c-newsletter {background:#FFF8E1; color:#F57F17;}
+.filtered-box {
+    background:#FAFAFA; border:1px dashed #E8E8E8;
+    border-radius:12px; padding:14px; font-size:13px;
+    color:#bbb; text-align:center; margin-top:8px;
+}
+.page-header {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:20px; padding-bottom:16px;
+    border-bottom:1px solid #F5F5F5;
+}
+.empty-state {text-align:center; padding:80px 0;}
+.empty-icon {font-size:52px; margin-bottom:16px;}
+.empty-title {font-size:22px; font-weight:700; color:#111; margin-bottom:8px;}
+.empty-sub {font-size:14px; color:#bbb;}
+.sidebar-user {text-align:center; padding:20px 0 16px; border-bottom:1px solid #EFEFEF; margin-bottom:16px;}
+.user-av {width:54px; height:54px; border-radius:50%; background:#111; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; margin:0 auto 10px;}
+.user-name {font-size:14px; font-weight:700; color:#111;}
+.user-email {font-size:11px; color:#bbb; margin-top:2px;}
+.section-lbl {font-size:9px; font-weight:700; letter-spacing:0.12em; color:#ccc; margin-bottom:8px; padding-left:4px;}
+.ch-row {display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:8px; font-size:13px; color:#555; margin-bottom:2px;}
+.ch-on {background:#fff; border:1px solid #EFEFEF; font-weight:500; color:#111;}
+.ch-soon {font-size:9px; background:#F5F5F5; color:#bbb; padding:2px 7px; border-radius:8px; margin-left:auto;}
+.ch-on-badge {font-size:9px; background:#111; color:#fff; padding:2px 7px; border-radius:8px; margin-left:auto;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -167,7 +195,7 @@ if 'code' in params and st.session_state.token is None:
             st.query_params.clear()
             st.rerun()
         else:
-            st.error(f"Login failed: {token.get('error_description','Unknown error')}")
+            st.error(f"Login failed: {token.get('error_description','Unknown')}")
     except Exception as e:
         st.error(f"Login failed: {e}")
 
@@ -176,48 +204,49 @@ if st.session_state.token is None:
     with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
         st.markdown("""
-<div style="text-align:center;margin-bottom:28px">
-    <div style="font-size:44px;margin-bottom:10px">📬</div>
-    <div style="font-size:28px;font-weight:700;margin-bottom:6px">Smart Inbox</div>
-    <div style="font-size:15px;color:rgba(128,128,128,0.65)">AI-powered · only what matters</div>
+<div style="text-align:center;margin-bottom:32px">
+    <div style="font-size:42px;margin-bottom:12px">📬</div>
+    <div style="font-size:30px;font-weight:800;color:#111;margin-bottom:8px">Smart Inbox</div>
+    <div style="font-size:15px;color:#bbb">AI-powered · only what matters</div>
 </div>
-<div style="background:rgba(128,128,128,0.04);border:1px solid rgba(128,128,128,0.12);border-radius:16px;padding:24px;margin-bottom:24px">
-<div style="display:flex;flex-direction:column;gap:12px">
-    <div style="display:flex;align-items:center;gap:12px;font-size:14px">
-        <span style="width:32px;height:32px;background:#FDECEA;border-radius:10px;display:inline-flex;align-items:center;justify-content:center">📧</span>
-        Reads your <strong>Gmail</strong> emails
+<div style="background:#FAFAFA;border:1px solid #EFEFEF;border-radius:16px;padding:24px;margin-bottom:24px">
+<div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:#555">
+        <span style="width:34px;height:34px;background:#FDECEA;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">📧</span>
+        Reads your <strong style="color:#111">Gmail</strong> emails automatically
     </div>
-    <div style="display:flex;align-items:center;gap:12px;font-size:14px">
-        <span style="width:32px;height:32px;background:#E3F2FD;border-radius:10px;display:inline-flex;align-items:center;justify-content:center">✈️</span>
-        Reads your <strong>Telegram</strong> messages
+    <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:#555">
+        <span style="width:34px;height:34px;background:#E3F2FD;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">✈️</span>
+        Reads your <strong style="color:#111">Telegram</strong> personal chats
     </div>
-    <div style="display:flex;align-items:center;gap:12px;font-size:14px">
-        <span style="width:32px;height:32px;background:#E8F5E9;border-radius:10px;display:inline-flex;align-items:center;justify-content:center">🤖</span>
-        <strong>AI</strong> filters spam and noise automatically
+    <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:#555">
+        <span style="width:34px;height:34px;background:#F5F5F5;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">🤖</span>
+        <strong style="color:#111">AI filters</strong> spam and noise automatically
     </div>
-    <div style="display:flex;align-items:center;gap:12px;font-size:14px">
-        <span style="width:32px;height:32px;background:#F3E5F5;border-radius:10px;display:inline-flex;align-items:center;justify-content:center">🔒</span>
-        Your data stays <strong>private</strong>
+    <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:#555">
+        <span style="width:34px;height:34px;background:#F0FDF4;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">🔒</span>
+        Your data stays <strong style="color:#111">100% private</strong>
     </div>
 </div>
 </div>
 """, unsafe_allow_html=True)
-        st.link_button("🔐 Continue with Google", get_auth_url(), type="primary", use_container_width=True)
-        st.caption("Processed by Anthropic AI for classification only — never stored.")
+        st.link_button("Continue with Google →", get_auth_url(), type="primary", use_container_width=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.caption("Processed by Anthropic AI for classification only — never stored or shared.")
 
 else:
     service = get_gmail_service(st.session_state.token)
 
     with st.sidebar:
         st.markdown("""
-<div style="text-align:center;padding-bottom:14px;border-bottom:1px solid rgba(128,128,128,0.12);margin-bottom:14px">
-<div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#EA4335,#FBBC04);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin:0 auto 8px">SJ</div>
-<div style="font-size:14px;font-weight:600">Saurabh Joshi</div>
-<div style="font-size:11px;color:rgba(128,128,128,0.55);margin-top:2px">saurabhjoshi7895@gmail.com</div>
+<div class="sidebar-user">
+    <div class="user-av">SJ</div>
+    <div class="user-name">Saurabh Joshi</div>
+    <div class="user-email">saurabhjoshi7895@gmail.com</div>
 </div>
 """, unsafe_allow_html=True)
 
-        st.markdown("<div style='font-size:9px;font-weight:700;letter-spacing:0.1em;color:rgba(128,128,128,0.5);margin-bottom:8px'>CHANNELS</div>", unsafe_allow_html=True)
+        st.markdown('<div class="section-lbl">CHANNELS</div>', unsafe_allow_html=True)
 
         show_gmail = st.toggle("Gmail", value=st.session_state.show_gmail)
         show_telegram = st.toggle("Telegram", value=st.session_state.show_telegram)
@@ -225,14 +254,14 @@ else:
         st.session_state.show_telegram = show_telegram
 
         st.markdown("""
-<div style="opacity:0.38;margin:4px 0 14px">
-<div class="sidebar-ch"><div class="ch-icon-box" style="background:#E8F5E9">💬</div><span style="flex:1">WhatsApp</span><span style="font-size:9px;background:rgba(128,128,128,0.1);padding:2px 7px;border-radius:8px">Soon</span></div>
-<div class="sidebar-ch"><div class="ch-icon-box" style="background:#E8F0FE">💼</div><span style="flex:1">LinkedIn</span><span style="font-size:9px;background:rgba(128,128,128,0.1);padding:2px 7px;border-radius:8px">Soon</span></div>
-<div class="sidebar-ch"><div class="ch-icon-box" style="background:#F5F5F5">🐦</div><span style="flex:1">Twitter / X</span><span style="font-size:9px;background:rgba(128,128,128,0.1);padding:2px 7px;border-radius:8px">Soon</span></div>
+<div style="margin:8px 0 16px;opacity:0.4">
+<div class="ch-row"><span>💬</span><span style="flex:1">WhatsApp</span><span class="ch-soon">Soon</span></div>
+<div class="ch-row"><span>💼</span><span style="flex:1">LinkedIn</span><span class="ch-soon">Soon</span></div>
+<div class="ch-row"><span>🐦</span><span style="flex:1">Twitter / X</span><span class="ch-soon">Soon</span></div>
 </div>
 """, unsafe_allow_html=True)
 
-        st.markdown("<div style='font-size:9px;font-weight:700;letter-spacing:0.1em;color:rgba(128,128,128,0.5);margin-bottom:8px'>STATS</div>", unsafe_allow_html=True)
+        st.markdown('<div class="section-lbl">STATS</div>', unsafe_allow_html=True)
 
         c1, c2 = st.columns(2)
         with c1:
@@ -244,7 +273,7 @@ else:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        if st.button("🔄 Fetch Messages", type="primary", use_container_width=True):
+        if st.button("🔄  Fetch Messages", type="primary", use_container_width=True):
             all_messages = []
             if show_gmail:
                 with st.spinner("Fetching Gmail..."):
@@ -273,25 +302,25 @@ else:
             st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🚪 Logout", use_container_width=True):
+        if st.button("Logout", use_container_width=True):
             for k in ['token','important','skipped']: st.session_state[k] = None if k=='token' else []
             st.session_state.total = 0
             st.rerun()
 
     if not st.session_state.important and st.session_state.total == 0:
         st.markdown("""
-<div style="text-align:center;padding:80px 0">
-<div style="font-size:52px;margin-bottom:16px">📬</div>
-<div style="font-size:22px;font-weight:600;margin-bottom:8px">Your inbox is ready</div>
-<div style="font-size:14px;color:rgba(128,128,128,0.6)">Click Fetch Messages in the sidebar to start</div>
+<div class="empty-state">
+    <div class="empty-icon">📬</div>
+    <div class="empty-title">Your inbox is ready</div>
+    <div class="empty-sub">Click Fetch Messages in the sidebar to get started</div>
 </div>""", unsafe_allow_html=True)
 
     elif not st.session_state.important:
         st.markdown("""
-<div style="text-align:center;padding:80px 0">
-<div style="font-size:52px;margin-bottom:16px">🎉</div>
-<div style="font-size:22px;font-weight:600;margin-bottom:8px">All clear!</div>
-<div style="font-size:14px;color:rgba(128,128,128,0.6)">No important messages right now</div>
+<div class="empty-state">
+    <div class="empty-icon">🎉</div>
+    <div class="empty-title">All clear!</div>
+    <div class="empty-sub">No important messages right now — enjoy your focus time</div>
 </div>""", unsafe_allow_html=True)
 
     else:
@@ -301,11 +330,11 @@ else:
         tc = sum(1 for m,_ in st.session_state.important if m.get('source')=='telegram')
 
         st.markdown(f"""
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-<div>
-    <div style="font-size:20px;font-weight:700">📬 All messages</div>
-    <div style="font-size:12px;color:rgba(128,128,128,0.6);margin-top:3px">{imp} important &nbsp;·&nbsp; {flt} filtered &nbsp;·&nbsp; 📧 {gc} Gmail &nbsp;·&nbsp; ✈️ {tc} Telegram</div>
-</div>
+<div class="page-header">
+    <div>
+        <div style="font-size:20px;font-weight:800;color:#111">All messages</div>
+        <div style="font-size:12px;color:#bbb;margin-top:3px">{imp} important &nbsp;·&nbsp; {flt} filtered out &nbsp;·&nbsp; 📧 {gc} Gmail &nbsp;·&nbsp; ✈️ {tc} Telegram</div>
+    </div>
 </div>""", unsafe_allow_html=True)
 
         cat_cls = {"work":"c-work","personal":"c-personal","spam":"c-spam","newsletter":"c-newsletter"}
@@ -316,23 +345,19 @@ else:
             cat = result.get('category','personal')
             sender = msg['sender'].split('<')[0].strip()[:45]
             subject = msg.get('subject') or 'No subject'
-            preview = msg.get('body','')[:150]
+            preview = msg.get('body','')[:160]
 
-            if source == 'gmail':
-                icon_html = f'<div class="app-icon icon-gmail">{GMAIL_SVG}</div>'
-                pill_html = f'<span class="src-pill sp-g">{GMAIL_SVG}&nbsp;Gmail</span>'
-            else:
-                icon_html = f'<div class="app-icon icon-telegram">{TELEGRAM_SVG}</div>'
-                pill_html = f'<span class="src-pill sp-t">{TELEGRAM_SVG}&nbsp;Telegram</span>'
+            icon_cls = "icon-gmail" if source == 'gmail' else "icon-telegram"
+            icon_emoji = "📧" if source == 'gmail' else "✈️"
+            pill_cls = "sp-g" if source == 'gmail' else "sp-t"
+            pill_lbl = "📧 Gmail" if source == 'gmail' else "✈️ Telegram"
 
             st.markdown(f"""
 <div class="card">
     <div class="card-top">
-        {icon_html}
-        <div class="card-meta">
-            <div class="card-sender">{sender}</div>
-        </div>
-        {pill_html}
+        <div class="app-icon {icon_cls}">{icon_emoji}</div>
+        <div class="card-sender">{sender}</div>
+        <span class="src-pill {pill_cls}">{pill_lbl}</span>
     </div>
     <div class="card-subject">{subject}</div>
     <div class="card-preview">{preview}...</div>
@@ -347,7 +372,7 @@ else:
                 st.text(msg.get('body',''))
 
         if st.session_state.skipped:
-            st.markdown(f'<div class="filtered-box">🗑️ &nbsp; <strong>{flt}</strong> newsletters, promotions and notifications were filtered out</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="filtered-box">🗑️ &nbsp; <strong>{flt}</strong> newsletters, promotions and automated notifications filtered out</div>', unsafe_allow_html=True)
             with st.expander("See what was filtered"):
                 for msg, result in st.session_state.skipped:
                     icon = "📧" if msg.get('source')=='gmail' else "✈️"
