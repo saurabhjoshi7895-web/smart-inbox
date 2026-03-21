@@ -9,7 +9,11 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from urllib.parse import urlencode
-from telegram_user import get_personal_messages
+from telegram_auth import (
+    send_code, verify_code, save_telegram_session,
+    get_telegram_session, delete_telegram_session,
+    get_messages_for_user
+)
 
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
 
@@ -115,6 +119,14 @@ def get_gmail_service(token):
     )
     return build('gmail', 'v1', credentials=creds)
 
+def get_user_email(token):
+    response = requests.get(
+        'https://www.googleapis.com/oauth2/v2/userinfo',
+        headers={'Authorization': f'Bearer {token["access_token"]}'}
+    )
+    data = response.json()
+    return data.get('email', ''), data.get('name', ''), data.get('picture', '')
+
 st.set_page_config(page_title="Smart Inbox", page_icon="📬", layout="wide")
 
 st.markdown("""
@@ -122,43 +134,40 @@ st.markdown("""
 section[data-testid="stSidebar"] > div {padding-top: 0 !important;}
 section[data-testid="stSidebar"] {background: #FAFAFA !important;}
 .block-container {padding-top: 1.5rem !important;}
-.card {
-    border: 1px solid #F0F0F0;
-    border-radius: 14px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    background: #fff;
-}
-.card:hover {border-color: #E0E0E0;}
-.card-top {display:flex; align-items:center; gap:10px; margin-bottom:10px;}
-.app-icon {width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;}
+.card {border:1px solid #F0F0F0;border-radius:14px;padding:14px 16px;margin-bottom:10px;background:#fff;}
+.card:hover {border-color:#E0E0E0;}
+.card-top {display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.app-icon {width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .icon-gmail {background:#FDECEA;}
 .icon-telegram {background:#E3F2FD;}
-.card-sender {font-size:13px; font-weight:600; color:#111; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.src-pill {font-size:10px; font-weight:600; padding:3px 10px; border-radius:20px; flex-shrink:0;}
-.sp-g {background:#FDECEA; color:#C0392B;}
-.sp-t {background:#E3F2FD; color:#0D6EAA;}
-.card-subject {font-size:14px; font-weight:600; color:#111; margin-bottom:4px; line-height:1.4;}
-.card-preview {font-size:12px; color:#999; line-height:1.6; margin-bottom:10px;}
-.card-footer {display:flex; align-items:center; gap:6px; padding-top:8px; border-top:1px solid #F5F5F5; font-size:11px; color:#bbb;}
-.cat {font-size:10px; font-weight:500; padding:2px 8px; border-radius:8px;}
-.c-work {background:#EDE7F6; color:#512DA8;}
-.c-personal {background:#E8F5E9; color:#2E7D32;}
-.c-spam {background:#FFEBEE; color:#C62828;}
-.c-newsletter {background:#FFF8E1; color:#F57F17;}
-.filtered-box {background:#FAFAFA; border:1px dashed #E8E8E8; border-radius:12px; padding:14px; font-size:13px; color:#bbb; text-align:center; margin-top:8px;}
-.page-header {display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #F5F5F5;}
-.empty-state {text-align:center; padding:80px 0;}
-.empty-icon {font-size:52px; margin-bottom:16px;}
-.empty-title {font-size:22px; font-weight:700; color:#111; margin-bottom:8px;}
-.empty-sub {font-size:14px; color:#bbb;}
-.section-lbl {font-size:9px; font-weight:700; letter-spacing:0.12em; color:#ccc; margin-bottom:8px; padding-left:4px;}
-div[data-testid="stCheckbox"] label {font-size:13px !important; font-weight:500 !important; color:#111 !important;}
-div[data-testid="stCheckbox"] {padding: 4px 0 !important;}
+.card-sender {font-size:13px;font-weight:600;color:#111;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.src-pill {font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;flex-shrink:0;}
+.sp-g {background:#FDECEA;color:#C0392B;}
+.sp-t {background:#E3F2FD;color:#0D6EAA;}
+.card-subject {font-size:14px;font-weight:600;color:#111;margin-bottom:4px;line-height:1.4;}
+.card-preview {font-size:12px;color:#999;line-height:1.6;margin-bottom:10px;}
+.card-footer {display:flex;align-items:center;gap:6px;padding-top:8px;border-top:1px solid #F5F5F5;font-size:11px;color:#bbb;}
+.cat {font-size:10px;font-weight:500;padding:2px 8px;border-radius:8px;}
+.c-work {background:#EDE7F6;color:#512DA8;}
+.c-personal {background:#E8F5E9;color:#2E7D32;}
+.c-spam {background:#FFEBEE;color:#C62828;}
+.c-newsletter {background:#FFF8E1;color:#F57F17;}
+.filtered-box {background:#FAFAFA;border:1px dashed #E8E8E8;border-radius:12px;padding:14px;font-size:13px;color:#bbb;text-align:center;margin-top:8px;}
+.page-header {display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #F5F5F5;}
+.empty-state {text-align:center;padding:80px 0;}
+.section-lbl {font-size:9px;font-weight:700;letter-spacing:0.12em;color:#ccc;margin-bottom:8px;padding-left:4px;}
+.tg-connected {background:#E3F2FD;border:1px solid #BBDEFB;border-radius:10px;padding:10px 12px;font-size:12px;color:#0D6EAA;margin-bottom:8px;}
+.tg-form {background:#F8F9FA;border:1px solid #EFEFEF;border-radius:12px;padding:14px;margin-bottom:8px;}
 </style>
 """, unsafe_allow_html=True)
 
-for k, v in [('token',None),('important',[]),('skipped',[]),('total',0),('show_gmail',True),('show_telegram',True)]:
+for k, v in [
+    ('token', None), ('important', []), ('skipped', []), ('total', 0),
+    ('show_gmail', True), ('show_telegram', True),
+    ('user_email', ''), ('user_name', ''), ('user_pic', ''),
+    ('tg_step', 'idle'), ('tg_phone', ''), ('tg_session_tmp', ''),
+    ('tg_code_hash', '')
+]:
     if k not in st.session_state: st.session_state[k] = v
 
 params = st.query_params
@@ -167,6 +176,10 @@ if 'code' in params and st.session_state.token is None:
         token = exchange_code_for_token(params['code'])
         if 'access_token' in token:
             st.session_state.token = token
+            email, name, pic = get_user_email(token)
+            st.session_state.user_email = email
+            st.session_state.user_name = name
+            st.session_state.user_pic = pic
             st.query_params.clear()
             st.rerun()
         else:
@@ -211,65 +224,134 @@ if st.session_state.token is None:
 
 else:
     service = get_gmail_service(st.session_state.token)
+    user_email = st.session_state.user_email
+    user_name = st.session_state.user_name or "User"
+    initials = ''.join([p[0].upper() for p in user_name.split()[:2]]) if user_name else "??"
+
+    tg_session_data = get_telegram_session(user_email) if user_email else None
+    tg_connected = tg_session_data is not None
 
     with st.sidebar:
-        st.markdown("""
+        st.markdown(f"""
 <div style="text-align:center;padding:20px 0 16px;border-bottom:1px solid #EFEFEF;margin-bottom:16px">
-    <div style="width:54px;height:54px;border-radius:50%;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin:0 auto 10px">SJ</div>
-    <div style="font-size:14px;font-weight:700;color:#111">Saurabh Joshi</div>
-    <div style="font-size:11px;color:#bbb;margin-top:2px">saurabhjoshi7895@gmail.com</div>
+    <div style="width:54px;height:54px;border-radius:50%;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin:0 auto 10px">{initials}</div>
+    <div style="font-size:14px;font-weight:700;color:#111">{user_name}</div>
+    <div style="font-size:11px;color:#bbb;margin-top:2px">{user_email}</div>
 </div>
 """, unsafe_allow_html=True)
 
         st.markdown('<div class="section-lbl">CHANNELS</div>', unsafe_allow_html=True)
 
-        col1, col2 = st.columns([4, 1])
+        col1, col2 = st.columns([4,1])
         with col1:
-            st.markdown("""
-<div style="display:flex;align-items:center;gap:8px;padding:6px 0">
-    <span style="width:26px;height:26px;background:#FDECEA;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:14px">📧</span>
-    <span style="font-size:13px;font-weight:500;color:#111">Gmail</span>
-</div>
-""", unsafe_allow_html=True)
+            st.markdown('<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="width:26px;height:26px;background:#FDECEA;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:14px">📧</span><span style="font-size:13px;font-weight:500;color:#111">Gmail</span></div>', unsafe_allow_html=True)
         with col2:
             show_gmail = st.checkbox("", value=st.session_state.show_gmail, key="cb_gmail")
 
-        col1, col2 = st.columns([4, 1])
+        col1, col2 = st.columns([4,1])
         with col1:
-            st.markdown("""
-<div style="display:flex;align-items:center;gap:8px;padding:6px 0">
-    <span style="width:26px;height:26px;background:#E3F2FD;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:14px">✈️</span>
-    <span style="font-size:13px;font-weight:500;color:#111">Telegram</span>
-</div>
-""", unsafe_allow_html=True)
+            tg_status = "✅" if tg_connected else "⚪"
+            st.markdown(f'<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="width:26px;height:26px;background:#E3F2FD;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:14px">✈️</span><span style="font-size:13px;font-weight:500;color:#111">Telegram {tg_status}</span></div>', unsafe_allow_html=True)
         with col2:
-            show_telegram = st.checkbox("", value=st.session_state.show_telegram, key="cb_telegram")
+            show_telegram = st.checkbox("", value=st.session_state.show_telegram and tg_connected, key="cb_telegram", disabled=not tg_connected)
 
         st.session_state.show_gmail = show_gmail
-        st.session_state.show_telegram = show_telegram
+        st.session_state.show_telegram = show_telegram and tg_connected
 
         st.markdown("""
-<div style="margin:8px 0 16px;opacity:0.38">
+<div style="margin:8px 0 8px;opacity:0.38">
     <div style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;color:#aaa">
         <span style="width:26px;height:26px;background:#E8F5E9;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:14px">💬</span>
-        <span style="flex:1">WhatsApp</span>
-        <span style="font-size:9px;background:#F5F5F5;color:#bbb;padding:2px 7px;border-radius:8px">Soon</span>
+        <span style="flex:1">WhatsApp</span><span style="font-size:9px;background:#F5F5F5;color:#bbb;padding:2px 7px;border-radius:8px">Soon</span>
     </div>
     <div style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;color:#aaa">
         <span style="width:26px;height:26px;background:#E8F0FE;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:14px">💼</span>
-        <span style="flex:1">LinkedIn</span>
-        <span style="font-size:9px;background:#F5F5F5;color:#bbb;padding:2px 7px;border-radius:8px">Soon</span>
+        <span style="flex:1">LinkedIn</span><span style="font-size:9px;background:#F5F5F5;color:#bbb;padding:2px 7px;border-radius:8px">Soon</span>
     </div>
     <div style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;color:#aaa">
         <span style="width:26px;height:26px;background:#F5F5F5;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:14px">🐦</span>
-        <span style="flex:1">Twitter / X</span>
-        <span style="font-size:9px;background:#F5F5F5;color:#bbb;padding:2px 7px;border-radius:8px">Soon</span>
+        <span style="flex:1">Twitter / X</span><span style="font-size:9px;background:#F5F5F5;color:#bbb;padding:2px 7px;border-radius:8px">Soon</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-        st.markdown('<div class="section-lbl">STATS</div>', unsafe_allow_html=True)
+        st.markdown("---")
 
+        if not tg_connected:
+            st.markdown("**Connect Telegram**")
+            if st.session_state.tg_step == 'idle':
+                phone = st.text_input("Your phone number", placeholder="+917895827654", key="tg_phone_input")
+                if st.button("Send OTP", use_container_width=True):
+                    if phone:
+                        with st.spinner("Sending OTP..."):
+                            try:
+                                session_tmp, code_hash = asyncio.run(send_code(phone))
+                                st.session_state.tg_phone = phone
+                                st.session_state.tg_session_tmp = session_tmp
+                                st.session_state.tg_code_hash = code_hash
+                                st.session_state.tg_step = 'otp'
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+                    else:
+                        st.warning("Please enter your phone number")
+
+            elif st.session_state.tg_step == 'otp':
+                st.success(f"OTP sent to {st.session_state.tg_phone}")
+                otp = st.text_input("Enter OTP from Telegram", key="tg_otp_input")
+                if st.button("Verify OTP", use_container_width=True):
+                    if otp:
+                        with st.spinner("Verifying..."):
+                            try:
+                                final_session, status = asyncio.run(verify_code(
+                                    st.session_state.tg_session_tmp,
+                                    st.session_state.tg_phone,
+                                    otp,
+                                    st.session_state.tg_code_hash
+                                ))
+                                if status == 'needs_password':
+                                    st.session_state.tg_step = 'password'
+                                    st.rerun()
+                                elif status == 'success':
+                                    save_telegram_session(user_email, final_session, st.session_state.tg_phone)
+                                    st.session_state.tg_step = 'idle'
+                                    st.success("Telegram connected!")
+                                    st.rerun()
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+                if st.button("Back", use_container_width=True):
+                    st.session_state.tg_step = 'idle'
+                    st.rerun()
+
+            elif st.session_state.tg_step == 'password':
+                st.info("2-step verification required")
+                pwd = st.text_input("Enter your Telegram password", type="password", key="tg_pwd_input")
+                if st.button("Submit Password", use_container_width=True):
+                    if pwd:
+                        with st.spinner("Verifying..."):
+                            try:
+                                final_session, status = asyncio.run(verify_code(
+                                    st.session_state.tg_session_tmp,
+                                    st.session_state.tg_phone,
+                                    None,
+                                    st.session_state.tg_code_hash,
+                                    password=pwd
+                                ))
+                                if status == 'success':
+                                    save_telegram_session(user_email, final_session, st.session_state.tg_phone)
+                                    st.session_state.tg_step = 'idle'
+                                    st.success("Telegram connected!")
+                                    st.rerun()
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+        else:
+            st.markdown(f'<div class="tg-connected">✅ Telegram connected<br><small>{tg_session_data["phone"]}</small></div>', unsafe_allow_html=True)
+            if st.button("Disconnect Telegram", use_container_width=True):
+                delete_telegram_session(user_email)
+                st.rerun()
+
+        st.markdown("---")
+        st.markdown('<div class="section-lbl">STATS</div>', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
             st.metric("Total", st.session_state.total)
@@ -285,13 +367,10 @@ else:
             if show_gmail:
                 with st.spinner("Fetching Gmail..."):
                     all_messages.extend(get_emails_from_service(service))
-            t_id = st.secrets.get("TELEGRAM_API_ID","")
-            t_hash = st.secrets.get("TELEGRAM_API_HASH","")
-            t_session = st.secrets.get("TELEGRAM_SESSION","")
-            if show_telegram and t_id and t_hash and t_session:
+            if st.session_state.show_telegram and tg_connected:
                 with st.spinner("Fetching Telegram..."):
                     try:
-                        tmsgs = asyncio.run(get_personal_messages(int(t_id), t_hash, t_session))
+                        tmsgs = asyncio.run(get_messages_for_user(tg_session_data['session_string']))
                         all_messages.extend(tmsgs)
                     except Exception as e:
                         st.warning(f"Telegram: {e}")
@@ -310,24 +389,25 @@ else:
 
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Logout", use_container_width=True):
-            for k in ['token','important','skipped']: st.session_state[k] = None if k=='token' else []
+            for k in ['token','important','skipped','user_email','user_name','user_pic']:
+                st.session_state[k] = None if k == 'token' else ''  if k in ['user_email','user_name','user_pic'] else []
             st.session_state.total = 0
             st.rerun()
 
     if not st.session_state.important and st.session_state.total == 0:
         st.markdown("""
 <div class="empty-state">
-    <div class="empty-icon">📬</div>
-    <div class="empty-title">Your inbox is ready</div>
-    <div class="empty-sub">Click Fetch Messages in the sidebar to get started</div>
+    <div style="font-size:52px;margin-bottom:16px">📬</div>
+    <div style="font-size:22px;font-weight:700;color:#111;margin-bottom:8px">Your inbox is ready</div>
+    <div style="font-size:14px;color:#bbb">Click Fetch Messages in the sidebar to get started</div>
 </div>""", unsafe_allow_html=True)
 
     elif not st.session_state.important:
         st.markdown("""
 <div class="empty-state">
-    <div class="empty-icon">🎉</div>
-    <div class="empty-title">All clear!</div>
-    <div class="empty-sub">No important messages right now — enjoy your focus time</div>
+    <div style="font-size:52px;margin-bottom:16px">🎉</div>
+    <div style="font-size:22px;font-weight:700;color:#111;margin-bottom:8px">All clear!</div>
+    <div style="font-size:14px;color:#bbb">No important messages right now</div>
 </div>""", unsafe_allow_html=True)
 
     else:
@@ -340,7 +420,7 @@ else:
 <div class="page-header">
     <div>
         <div style="font-size:20px;font-weight:800;color:#111">All messages</div>
-        <div style="font-size:12px;color:#bbb;margin-top:3px">{imp} important &nbsp;·&nbsp; {flt} filtered out &nbsp;·&nbsp; 📧 {gc} Gmail &nbsp;·&nbsp; ✈️ {tc} Telegram</div>
+        <div style="font-size:12px;color:#bbb;margin-top:3px">{imp} important &nbsp;·&nbsp; {flt} filtered &nbsp;·&nbsp; 📧 {gc} Gmail &nbsp;·&nbsp; ✈️ {tc} Telegram</div>
     </div>
 </div>""", unsafe_allow_html=True)
 
@@ -378,7 +458,7 @@ else:
                 st.text(msg.get('body',''))
 
         if st.session_state.skipped:
-            st.markdown(f'<div class="filtered-box">🗑️ &nbsp; <strong>{flt}</strong> newsletters, promotions and automated notifications filtered out</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="filtered-box">🗑️ &nbsp; <strong>{flt}</strong> newsletters, promotions and notifications filtered out</div>', unsafe_allow_html=True)
             with st.expander("See what was filtered"):
                 for msg, result in st.session_state.skipped:
                     icon = "📧" if msg.get('source')=='gmail' else "✈️"
