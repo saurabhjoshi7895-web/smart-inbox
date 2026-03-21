@@ -5,6 +5,8 @@ import os
 import base64
 import requests
 from telegram_inbox import get_telegram_messages
+from telegram_user import get_personal_messages
+import asyncio
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
@@ -169,11 +171,21 @@ else:
                 email['source'] = 'gmail'
             all_messages.extend(emails)
 
-        telegram_token = st.secrets.get("TELEGRAM_BOT_TOKEN", "")
-        if telegram_token:
-            with st.spinner("Fetching your Telegram messages..."):
-                telegram_msgs = get_telegram_messages(telegram_token)
-                all_messages.extend(telegram_msgs)
+        telegram_api_id = st.secrets.get("TELEGRAM_API_ID", "")
+        telegram_api_hash = st.secrets.get("TELEGRAM_API_HASH", "")
+        telegram_session = st.secrets.get("TELEGRAM_SESSION", "")
+
+        if telegram_api_id and telegram_api_hash and telegram_session:
+             with st.spinner("Fetching your Telegram personal chats..."):
+                try:
+                    telegram_msgs = asyncio.run(get_personal_messages(
+                        int(telegram_api_id),
+                        telegram_api_hash,
+                        telegram_session
+                    ))
+                    all_messages.extend(telegram_msgs)
+                except Exception as e:
+                    st.warning(f"Telegram fetch failed: {e}")
 
         important = []
         skipped = []
