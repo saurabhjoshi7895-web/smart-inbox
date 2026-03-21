@@ -226,16 +226,7 @@ if st.session_state.token is None:
 
   <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:360px;z-index:1">
 
-    <div style="cursor:pointer">
-      <div style="width:38px;height:38px;border-radius:10px;background:rgba(234,67,53,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="#EA4335"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-.561.289-1.078.766-1.376l10.598-6.547a1.636 1.636 0 0 1 1.272 0l10.598 6.547c.477.298.766.815.766 1.376z"/></svg>
-      </div>
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:700;color:#FF8A7A">Continue with Gmail</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">Required — sign in with Google</div>
-      </div>
-      <span style="color:rgba(234,67,53,0.8);font-size:22px;line-height:1">›</span>
-    </div>
+    <div style="height:10px"></div>
 
     <div style="display:flex;align-items:center;gap:10px;margin:4px 0">
       <div style="flex:1;height:1px;background:rgba(255,255,255,0.06)"></div>
@@ -295,6 +286,7 @@ if st.session_state.token is None:
 
 </div>
 """, unsafe_allow_html=True)
+        st.link_button("🔐  Continue with Gmail", auth_url, type="primary", use_container_width=True)
 
 else:
     service = get_gmail_service(st.session_state.token)
