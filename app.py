@@ -3,14 +3,13 @@ import anthropic
 import json
 import os
 import base64
-import requests
-from telegram_inbox import get_telegram_messages
-from telegram_user import get_personal_messages
 import asyncio
+import requests
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from urllib.parse import urlencode
+from telegram_user import get_personal_messages
 
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
 
@@ -118,12 +117,14 @@ def get_emails_from_service(service, max_results=20):
         emails.append({
             'sender': sender,
             'subject': subject,
-            'body': body[:500]
+            'body': body[:500],
+            'source': 'gmail'
         })
     return emails
 
 def get_gmail_service(token):
-    creds = Credentials(token=token['access_token'],
+    creds = Credentials(
+        token=token['access_token'],
         refresh_token=token.get('refresh_token'),
         token_uri='https://oauth2.googleapis.com/token',
         client_id=st.secrets["GOOGLE_CLIENT_ID"],
@@ -133,8 +134,51 @@ def get_gmail_service(token):
     return build('gmail', 'v1', credentials=creds)
 
 st.set_page_config(page_title="Smart Inbox", page_icon="📬", layout="wide")
+
+st.markdown("""
+<style>
+.gmail-card {
+    background: #1a1a2e;
+    border-left: 4px solid #4285F4;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 8px 0;
+}
+.telegram-card {
+    background: #1a1a2e;
+    border-left: 4px solid #229ED9;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 8px 0;
+}
+.source-badge-gmail {
+    background: #4285F4;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+.source-badge-telegram {
+    background: #229ED9;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+.category-badge {
+    background: #2d2d2d;
+    color: #aaa;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.title("📬 Smart Inbox")
-st.caption("AI-powered inbox that shows only what matters")
+st.caption("AI-powered inbox — only what matters")
 
 if 'token' not in st.session_state:
     st.session_state.token = None
@@ -154,88 +198,131 @@ if 'code' in params and st.session_state.token is None:
         st.error(f"Login failed: {e}")
 
 if st.session_state.token is None:
-    st.markdown("### Welcome! Please login with your Google account.")
-    st.markdown("Your emails stay private — we only read them to classify importance.")
-    st.divider()
-    st.link_button("🔐 Login with Google", get_auth_url(), type="primary")
+    st.markdown("---")
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        st.markdown("### 👋 Welcome to Smart Inbox")
+        st.markdown("Your AI assistant that reads Gmail and Telegram and shows only what matters.")
+        st.markdown("")
+        st.markdown("**What it does:**")
+        st.markdown("- Fetches your Gmail emails")
+        st.markdown("- Fetches your Telegram messages")
+        st.markdown("- AI classifies every message")
+        st.markdown("- Shows only important ones")
+        st.markdown("")
+        st.link_button("🔐 Login with Google to get started", get_auth_url(), type="primary", use_container_width=True)
+        st.markdown("")
+        st.caption("🔒 Your emails stay private — processed by Anthropic AI for classification only")
 else:
     service = get_gmail_service(st.session_state.token)
-    col1, col2, col3 = st.columns(3)
 
-    if st.button("🔄 Fetch & Classify Messages", type="primary"):
-        all_messages = []
+    with st.sidebar:
+        st.markdown("### 📬 Smart Inbox")
+        st.markdown("---")
 
-        with st.spinner("Fetching your Gmail emails..."):
-            emails = get_emails_from_service(service)
-            for email in emails:
-                email['source'] = 'gmail'
-            all_messages.extend(emails)
+        if st.button("🔄 Fetch Messages", type="primary", use_container_width=True):
+            all_messages = []
 
-        telegram_api_id = st.secrets.get("TELEGRAM_API_ID", "")
-        telegram_api_hash = st.secrets.get("TELEGRAM_API_HASH", "")
-        telegram_session = st.secrets.get("TELEGRAM_SESSION", "")
+            with st.spinner("Fetching Gmail..."):
+                emails = get_emails_from_service(service)
+                all_messages.extend(emails)
 
-        if telegram_api_id and telegram_api_hash and telegram_session:
-             with st.spinner("Fetching your Telegram personal chats..."):
-                try:
-                    telegram_msgs = asyncio.run(get_personal_messages(
-                        int(telegram_api_id),
-                        telegram_api_hash,
-                        telegram_session
-                    ))
-                    all_messages.extend(telegram_msgs)
-                except Exception as e:
-                    st.warning(f"Telegram fetch failed: {e}")
+            telegram_api_id = st.secrets.get("TELEGRAM_API_ID", "")
+            telegram_api_hash = st.secrets.get("TELEGRAM_API_HASH", "")
+            telegram_session = st.secrets.get("TELEGRAM_SESSION", "")
 
-        important = []
-        skipped = []
-        progress = st.progress(0)
-        status = st.empty()
+            if telegram_api_id and telegram_api_hash and telegram_session:
+                with st.spinner("Fetching Telegram..."):
+                    try:
+                        telegram_msgs = asyncio.run(get_personal_messages(
+                            int(telegram_api_id),
+                            telegram_api_hash,
+                            telegram_session
+                        ))
+                        all_messages.extend(telegram_msgs)
+                    except Exception as e:
+                        st.warning(f"Telegram: {e}")
 
-        for i, email in enumerate(all_messages):
-            status.text(f"Classifying message {i+1} of {len(all_messages)}...")
-            result = classify_email(email)
-            if result['importance'] == 'high':
-                important.append((email, result))
+            important = []
+            skipped = []
+
+            progress = st.progress(0)
+            for i, msg in enumerate(all_messages):
+                result = classify_email(msg)
+                if result['importance'] == 'high':
+                    important.append((msg, result))
+                else:
+                    skipped.append((msg, result))
+                progress.progress((i + 1) / len(all_messages))
+            progress.empty()
+
+            st.session_state.important = important
+            st.session_state.skipped = skipped
+            st.session_state.total = len(all_messages)
+
+        if 'important' in st.session_state:
+            st.markdown("---")
+            st.metric("Total fetched", st.session_state.total)
+            st.metric("Important", len(st.session_state.important))
+            st.metric("Filtered out", len(st.session_state.skipped))
+            st.markdown("---")
+
+            gmail_count = sum(1 for msg, _ in st.session_state.important if msg.get('source') == 'gmail')
+            telegram_count = sum(1 for msg, _ in st.session_state.important if msg.get('source') == 'telegram')
+
+            st.markdown(f"📧 **Gmail:** {gmail_count} important")
+            st.markdown(f"✈️ **Telegram:** {telegram_count} important")
+            st.markdown("---")
+
+        if st.button("🚪 Logout", use_container_width=True):
+            st.session_state.token = None
+            st.rerun()
+
+    if 'important' not in st.session_state:
+        st.markdown("### 👈 Click Fetch Messages to get started")
+        st.markdown("Your inbox will appear here after fetching.")
+    elif len(st.session_state.important) == 0:
+        st.success("🎉 No important messages right now — your inbox is clean!")
+    else:
+        st.markdown(f"### ✅ {len(st.session_state.important)} Important Messages")
+        st.markdown("---")
+
+        for msg, result in st.session_state.important:
+            source = msg.get('source', 'gmail')
+
+            if source == 'gmail':
+                badge = '<span class="source-badge-gmail">📧 Gmail</span>'
+                card_class = 'gmail-card'
             else:
-                skipped.append((email, result))
-            progress.progress((i + 1) / len(all_messages))
+                badge = '<span class="source-badge-telegram">✈️ Telegram</span>'
+                card_class = 'telegram-card'
 
-        progress.empty()
-        status.empty()
+            cat_icons = {
+                "work": "💼",
+                "personal": "👤",
+                "spam": "🚫",
+                "newsletter": "📰"
+            }
+            cat_icon = cat_icons.get(result['category'], "📌")
 
-        with col1:
-            st.metric("Total Fetched", len(all_messages))
-        with col2:
-            st.metric("Important", len(important))
-        with col3:
-            st.metric("Filtered Out", len(skipped))
+            st.markdown(f"""
+<div class="{card_class}">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+        <div>{badge} &nbsp; <span class="category-badge">{cat_icon} {result['category'].upper()}</span></div>
+    </div>
+    <div style="font-size:16px; font-weight:600; margin-bottom:4px">{msg['subject']}</div>
+    <div style="color:#888; font-size:13px; margin-bottom:8px">From: {msg['sender']}</div>
+    <div style="color:#aaa; font-size:13px; border-top:1px solid #333; padding-top:8px">{result['reason']}</div>
+</div>
+""", unsafe_allow_html=True)
 
-        st.divider()
+            with st.expander("Show full message"):
+                st.text(msg['body'][:500])
 
-        if important:
-            st.subheader("✅ Important Messages")
-            for email, result in important:
-                cat_colors = {
-                    "work": "🔵",
-                    "personal": "🟢",
-                    "spam": "🔴",
-                    "newsletter": "🟡"
-                }
-                icon = cat_colors.get(result['category'], "⚪")
-                source = email.get('source', 'gmail')
-                source_icon = "📧" if source == 'gmail' else "✈️"
-                st.markdown(f"### {icon} {email['subject']}")
-                st.markdown(f"**From:** {email['sender']} {source_icon} {source.upper()}")
-                st.markdown(f"**Category:** {result['category'].upper()}")
-                st.markdown(f"**Why important:** {result['reason']}")
-                with st.expander("Show message body"):
-                    st.text(email['body'][:500])
-                st.divider()
-        else:
-            st.info("No important messages found!")
-
-        if skipped:
-            with st.expander(f"🗑️ See {len(skipped)} filtered out messages"):
-                for email, result in skipped:
-                    st.markdown(f"- **{email['subject']}** — {result['reason']}")
+        if st.session_state.skipped:
+            st.markdown("---")
+            with st.expander(f"🗑️ {len(st.session_state.skipped)} filtered out messages"):
+                for msg, result in st.session_state.skipped:
+                    source = msg.get('source', 'gmail')
+                    source_icon = "📧" if source == 'gmail' else "✈️"
+                    st.markdown(f"- {source_icon} **{msg['subject']}** — {result['reason']}")
