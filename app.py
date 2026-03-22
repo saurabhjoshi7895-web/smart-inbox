@@ -401,7 +401,7 @@ if st.session_state.token is None and st.session_state.logged_in_via != 'telegra
 """, unsafe_allow_html=True)
 
 else:
-    service = get_gmail_service(st.session_state.token)
+    service = get_gmail_service(st.session_state.token) if st.session_state.token else None
     user_email = st.session_state.user_email
     user_name = st.session_state.user_name or "User"
     initials = ''.join([p[0].upper() for p in user_name.split()[:2]]) if user_name else "??"
@@ -539,7 +539,7 @@ else:
 
         if st.button("🔄  Fetch Messages", type="primary", use_container_width=True):
             all_messages = []
-            if show_gmail:
+            if show_gmail and service:
                 with st.spinner("Fetching Gmail..."):
                     all_messages.extend(get_emails_from_service(service))
             if st.session_state.show_telegram and tg_connected:
