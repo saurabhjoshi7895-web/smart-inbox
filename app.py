@@ -198,6 +198,7 @@ if 'code' in params and st.session_state.token is None:
 
 if st.session_state.token is None:
     auth_url = get_auth_url()
+    import streamlit.components.v1 as components
     _, col2, _ = st.columns([1,2,1])
     with col2:
         st.markdown(f"""
@@ -242,44 +243,67 @@ if st.session_state.token is None:
 </div>
 """, unsafe_allow_html=True)
 
-        st.markdown("""
-<div style="max-width:360px;margin:0 auto;display:flex;flex-direction:column;gap:8px">
-<div style="background:rgba(234,67,53,0.15);border:1px solid rgba(234,67,53,0.4);border-radius:14px;padding:15px 18px;display:flex;align-items:center;gap:12px;margin-bottom:4px;cursor:pointer">
-<span style="width:38px;height:38px;background:rgba(234,67,53,0.25);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📧</span>
-<div style="flex:1"><div style="font-size:14px;font-weight:700;color:#FF8A7A">Continue with Gmail</div>
-<div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">Required — connects your Google account</div></div>
-<span style="color:rgba(234,67,53,0.7);font-size:22px">›</span>
+        components.html(f"""
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* {{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}}
+body {{background:transparent}}
+.wrap {{max-width:360px;margin:0 auto;display:flex;flex-direction:column;gap:8px}}
+.gmail-btn {{background:rgba(234,67,53,0.15);border:1px solid rgba(234,67,53,0.5);border-radius:14px;padding:15px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;text-decoration:none}}
+.gmail-btn:hover {{background:rgba(234,67,53,0.25)}}
+.icon {{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}}
+.row {{display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}}
+.divider {{height:1px;background:rgba(255,255,255,0.06);margin:4px 0}}
+.label {{font-size:10px;color:rgba(255,255,255,0.3);text-align:center;margin-bottom:4px}}
+.soon {{font-size:10px;color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.1);padding:2px 8px;border-radius:8px;margin-left:auto}}
+.footer {{text-align:center;font-size:11px;color:rgba(255,255,255,0.2);margin-top:8px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="{auth_url}" class="gmail-btn">
+    <div class="icon" style="background:rgba(234,67,53,0.25)">📧</div>
+    <div style="flex:1">
+      <div style="font-size:14px;font-weight:700;color:#FF8A7A">Continue with Gmail</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">Required — connects your Google account</div>
+    </div>
+    <span style="color:rgba(234,67,53,0.7);font-size:22px">›</span>
+  </a>
+  <div class="divider"></div>
+  <div class="label">also connect after login</div>
+  <div class="row" style="border-color:rgba(34,158,217,0.25);background:rgba(34,158,217,0.08)">
+    <div class="icon" style="background:rgba(34,158,217,0.2)">✈️</div>
+    <div style="flex:1">
+      <div style="font-size:14px;font-weight:600;color:#64B5F6">Connect Telegram</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.3)">Connect after Gmail login</div>
+    </div>
+    <span style="color:rgba(34,158,217,0.5);font-size:20px">›</span>
+  </div>
+  <div class="row" style="opacity:0.4">
+    <div class="icon" style="background:rgba(37,211,102,0.15)">💬</div>
+    <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#aaa">WhatsApp</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.2)">Personal messages</div></div>
+    <span class="soon">SOON</span>
+  </div>
+  <div class="row" style="opacity:0.4">
+    <div class="icon" style="background:rgba(10,102,194,0.15)">💼</div>
+    <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#aaa">LinkedIn</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.2)">Messages and notifications</div></div>
+    <span class="soon">SOON</span>
+  </div>
+  <div class="row" style="opacity:0.4">
+    <div class="icon" style="background:rgba(255,255,255,0.08)">🐦</div>
+    <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#aaa">Twitter / X</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.2)">DMs and mentions</div></div>
+    <span class="soon">SOON</span>
+  </div>
+  <div class="footer">🔒 End-to-end private · Never stored</div>
 </div>
-<div style="height:1px;background:rgba(255,255,255,0.06);margin:4px 0"></div>
-<div style="text-align:center;font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:4px">also connect after login</div>
-<div style="background:rgba(34,158,217,0.08);border:1px solid rgba(34,158,217,0.25);border-radius:14px;padding:13px 18px;display:flex;align-items:center;gap:12px">
-<span style="width:38px;height:38px;background:rgba(34,158,217,0.2);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">✈️</span>
-<div><div style="font-size:14px;font-weight:600;color:#64B5F6">Connect Telegram</div>
-<div style="font-size:11px;color:rgba(255,255,255,0.3)">Connect after Gmail login</div></div>
-<span style="margin-left:auto;color:rgba(34,158,217,0.5);font-size:20px">›</span>
-</div>
-<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:13px 18px;display:flex;align-items:center;gap:12px;opacity:0.4">
-<span style="width:38px;height:38px;background:rgba(37,211,102,0.2);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">💬</span>
-<div><div style="font-size:14px;font-weight:600;color:#aaa">WhatsApp</div>
-<div style="font-size:11px;color:rgba(255,255,255,0.2)">Personal messages</div></div>
-<span style="margin-left:auto;font-size:10px;color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.1);padding:2px 8px;border-radius:8px">SOON</span>
-</div>
-<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:13px 18px;display:flex;align-items:center;gap:12px;opacity:0.4">
-<span style="width:38px;height:38px;background:rgba(10,102,194,0.2);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">💼</span>
-<div><div style="font-size:14px;font-weight:600;color:#aaa">LinkedIn</div>
-<div style="font-size:11px;color:rgba(255,255,255,0.2)">Messages and notifications</div></div>
-<span style="margin-left:auto;font-size:10px;color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.1);padding:2px 8px;border-radius:8px">SOON</span>
-</div>
-<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:13px 18px;display:flex;align-items:center;gap:12px;opacity:0.4">
-<span style="width:38px;height:38px;background:rgba(255,255,255,0.1);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🐦</span>
-<div><div style="font-size:14px;font-weight:600;color:#aaa">Twitter / X</div>
-<div style="font-size:11px;color:rgba(255,255,255,0.2)">DMs and mentions</div></div>
-<span style="margin-left:auto;font-size:10px;color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.1);padding:2px 8px;border-radius:8px">SOON</span>
-</div>
-<div style="text-align:center;font-size:11px;color:rgba(255,255,255,0.2);margin-top:8px">🔒 End-to-end private · Never stored</div>
-</div>
-""", unsafe_allow_html=True)
-
+</body>
+</html>
+""", height=420, scrolling=False)
 
 
 else:
