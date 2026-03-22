@@ -242,7 +242,7 @@ a {{text-decoration:none}}
 .sub {{font-size:12px;color:rgba(255,255,255,0.35)}}
 .arrow {{color:rgba(234,67,53,0.6);font-size:22px;font-weight:300;margin-left:auto}}
 </style>
-<a href="{auth_url}" target="_top" class="btn">
+<div class="btn" onclick="window.parent.location.href='{auth_url}'">
   <div class="icon">
     <svg width="22" height="18" viewBox="0 0 22 18" fill="none">
       <path d="M1 1L11 10L21 1" stroke="#FF8A7A" stroke-width="2" stroke-linecap="round"/>
@@ -254,7 +254,7 @@ a {{text-decoration:none}}
     <div class="sub">Required — connects your Google account</div>
   </div>
   <div class="arrow">›</div>
-</a>
+</div>
 """, height=80, scrolling=False)
 
         st.markdown("""
