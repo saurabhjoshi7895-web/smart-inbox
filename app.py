@@ -11,7 +11,7 @@ from urllib.parse import urlencode
 from telegram_auth import (
     send_code, verify_code, save_telegram_session,
     get_telegram_session, delete_telegram_session,
-    get_messages_for_user
+    get_messages_for_user, get_messages_for_user_sync
 )
 
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
@@ -556,7 +556,12 @@ else:
                 with st.spinner("Fetching Telegram..."):
                     try:
                         st.write(f"DEBUG: tg_connected={tg_connected}, session exists={tg_session_data is not None}")
-                        tmsgs = asyncio.run(get_messages_for_user(tg_session_data['session_string'], max_chats=20))
+                        tmsgs = get_messages_for_user_sync(
+                            tg_session_data['session_string'],
+                            st.secrets["TELEGRAM_API_ID"],
+                            st.secrets["TELEGRAM_API_HASH"],
+                            max_chats=20
+                        )
                         st.write(f"DEBUG: fetched {len(tmsgs)} messages")
                         all_messages.extend(tmsgs)
                     except Exception as e:
