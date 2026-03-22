@@ -156,10 +156,17 @@ section[data-testid="stSidebar"] { background: #111111 !important; }
 .tg-connected { background:#0d1f2d;border:1px solid #1a3a4d;border-radius:10px;padding:10px 12px;font-size:12px;color:#64B5F6;margin-bottom:8px; }
 div[data-testid="stLinkButton"] a {
     background: rgba(234,67,53,0.15) !important;
-    border: 1px solid rgba(234,67,53,0.4) !important;
+    border: 1px solid rgba(234,67,53,0.5) !important;
     color: #FF8A7A !important;
     border-radius: 14px !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
+    font-size: 15px !important;
+    padding: 14px 18px !important;
+    text-align: left !important;
+}
+div[data-testid="stLinkButton"] a:hover {
+    background: rgba(234,67,53,0.25) !important;
+    border-color: rgba(234,67,53,0.7) !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -274,7 +281,6 @@ if st.session_state.token is None:
 """, unsafe_allow_html=True)
 
 
-    st.link_button("📧  Continue with Gmail", auth_url, type="primary", use_container_width=True)
 
 else:
     service = get_gmail_service(st.session_state.token)
