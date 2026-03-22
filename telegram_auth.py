@@ -85,5 +85,8 @@ async def get_messages_for_user(session_string, max_chats=20):
                         })
         await client.disconnect()
     except Exception as e:
+        import traceback
         print(f"Telegram error: {e}")
+        print(traceback.format_exc())
+        raise e
     return messages

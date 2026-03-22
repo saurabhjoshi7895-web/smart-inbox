@@ -560,7 +560,9 @@ else:
                         st.write(f"DEBUG: fetched {len(tmsgs)} messages")
                         all_messages.extend(tmsgs)
                     except Exception as e:
+                        import traceback
                         st.error(f"Telegram error: {e}")
+                        st.error(traceback.format_exc())
             else:
                 st.write(f"DEBUG: skipped telegram - tg_connected={tg_connected}, logged_in_via={st.session_state.logged_in_via}, show_telegram={st.session_state.show_telegram}")
             if all_messages:
