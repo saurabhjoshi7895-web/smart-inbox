@@ -168,6 +168,24 @@ div[data-testid="stLinkButton"] a {
     width: 100% !important;
     justify-content: flex-start !important;
 }
+div[data-testid="stLinkButton"] p {
+    display: none !important;
+}
+div[data-testid="stLinkButton"] a::after {
+    content: "Required — connects your Google account" !important;
+    display: block !important;
+    font-size: 11px !important;
+    font-weight: 400 !important;
+    color: rgba(255,255,255,0.35) !important;
+    margin-top: 2px !important;
+    position: absolute !important;
+    left: 80px !important;
+    top: 28px !important;
+}
+div[data-testid="stLinkButton"] a {
+    position: relative !important;
+    min-height: 74px !important;
+}
 div[data-testid="stLinkButton"] a::before {
     content: "" !important;
     width: 44px !important;
