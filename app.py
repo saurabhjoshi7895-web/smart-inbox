@@ -233,6 +233,7 @@ if st.session_state.token is None:
         components.html(f"""
 <style>
 * {{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}}
+body {{background:#0A0A0A}}
 a {{text-decoration:none}}
 .btn {{display:flex;align-items:center;gap:14px;padding:15px 18px;border-radius:16px;border:1px solid rgba(234,67,53,0.35);background:rgba(234,67,53,0.15);cursor:pointer}}
 .btn:hover {{background:rgba(234,67,53,0.25);border-color:rgba(234,67,53,0.6)}}
@@ -241,7 +242,7 @@ a {{text-decoration:none}}
 .sub {{font-size:12px;color:rgba(255,255,255,0.35)}}
 .arrow {{color:rgba(234,67,53,0.6);font-size:22px;font-weight:300;margin-left:auto}}
 </style>
-<a href="{auth_url}" class="btn">
+<a href="{auth_url}" target="_top" class="btn">
   <div class="icon">
     <svg width="22" height="18" viewBox="0 0 22 18" fill="none">
       <path d="M1 1L11 10L21 1" stroke="#FF8A7A" stroke-width="2" stroke-linecap="round"/>
