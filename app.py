@@ -225,7 +225,12 @@ if st.session_state.token is None:
   </div>
 
   <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:360px;z-index:1">
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
+        st.markdown("""
+<div style="max-width:360px;margin:0 auto;display:flex;flex-direction:column;gap:10px">
     <div style="display:flex;align-items:center;gap:10px;margin:4px 0">
       <div style="flex:1;height:1px;background:rgba(255,255,255,0.06)"></div>
       <div style="font-size:10px;color:rgba(255,255,255,0.18)">also connect after login</div>
