@@ -9,9 +9,9 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from urllib.parse import urlencode
 from telegram_auth import (
-    send_code, verify_code, save_telegram_session,
+    send_code_sync, verify_code_sync, save_telegram_session,
     get_telegram_session, delete_telegram_session,
-    get_messages_for_user, get_messages_for_user_sync
+    get_messages_for_user_sync
 )
 
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
@@ -292,7 +292,7 @@ if st.session_state.token is None and st.session_state.logged_in_via != 'telegra
                 if phone:
                     with st.spinner("Sending OTP..."):
                         try:
-                            session_tmp, code_hash = asyncio.run(send_code(phone))
+                            session_tmp, code_hash = send_code_sync(phone, st.secrets["TELEGRAM_API_ID"], st.secrets["TELEGRAM_API_HASH"])
                             st.session_state.tg_login_phone = phone
                             st.session_state.tg_login_session_tmp = session_tmp
                             st.session_state.tg_login_code_hash = code_hash
@@ -312,12 +312,14 @@ if st.session_state.token is None and st.session_state.logged_in_via != 'telegra
                     if otp:
                         with st.spinner("Verifying..."):
                             try:
-                                final_session, status = asyncio.run(verify_code(
+                                final_session, status = verify_code_sync(
                                     st.session_state.tg_login_session_tmp,
                                     st.session_state.tg_login_phone,
                                     otp,
-                                    st.session_state.tg_login_code_hash
-                                ))
+                                    st.session_state.tg_login_code_hash,
+                                    st.secrets["TELEGRAM_API_ID"],
+                                    st.secrets["TELEGRAM_API_HASH"]
+                                )
                                 if status == 'needs_password':
                                     st.session_state.tg_login_step = 'password'
                                     st.rerun()
@@ -349,7 +351,7 @@ if st.session_state.token is None and st.session_state.logged_in_via != 'telegra
                     if pwd:
                         with st.spinner("Verifying..."):
                             try:
-                                final_session, status = asyncio.run(verify_code(
+                                final_session, status = verify_code_sync(
                                     st.session_state.tg_login_session_tmp,
                                     st.session_state.tg_login_phone,
                                     None,
@@ -476,7 +478,7 @@ else:
                     if phone:
                         with st.spinner("Sending OTP..."):
                             try:
-                                session_tmp, code_hash = asyncio.run(send_code(phone))
+                                session_tmp, code_hash = send_code_sync(phone, st.secrets["TELEGRAM_API_ID"], st.secrets["TELEGRAM_API_HASH"])
                                 st.session_state.tg_phone = phone
                                 st.session_state.tg_session_tmp = session_tmp
                                 st.session_state.tg_code_hash = code_hash
@@ -494,12 +496,14 @@ else:
                     if otp:
                         with st.spinner("Verifying..."):
                             try:
-                                final_session, status = asyncio.run(verify_code(
+                                final_session, status = verify_code_sync(
                                     st.session_state.tg_session_tmp,
                                     st.session_state.tg_phone,
                                     otp,
-                                    st.session_state.tg_code_hash
-                                ))
+                                    st.session_state.tg_code_hash,
+                                    st.secrets["TELEGRAM_API_ID"],
+                                    st.secrets["TELEGRAM_API_HASH"]
+                                )
                                 if status == 'needs_password':
                                     st.session_state.tg_step = 'password'
                                     st.rerun()
@@ -520,13 +524,15 @@ else:
                     if pwd:
                         with st.spinner("Verifying..."):
                             try:
-                                final_session, status = asyncio.run(verify_code(
+                                final_session, status = verify_code_sync(
                                     st.session_state.tg_session_tmp,
                                     st.session_state.tg_phone,
                                     None,
                                     st.session_state.tg_code_hash,
+                                    st.secrets["TELEGRAM_API_ID"],
+                                    st.secrets["TELEGRAM_API_HASH"],
                                     password=pwd
-                                ))
+                                )
                                 if status == 'success':
                                     save_telegram_session(user_email, final_session, st.session_state.tg_phone)
                                     st.session_state.tg_step = 'idle'

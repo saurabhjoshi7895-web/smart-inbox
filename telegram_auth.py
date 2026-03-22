@@ -30,36 +30,89 @@ def delete_telegram_session(user_email):
     supabase = get_supabase()
     supabase.table("telegram_sessions").delete().eq("user_email", user_email).execute()
 
+def send_code_sync(phone, api_id, api_hash):
+    import threading
+    result_data = []
+    error_data = []
+
+    def run():
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        async def _do():
+            client = TelegramClient(StringSession(), int(api_id), api_hash)
+            await client.connect()
+            result = await client.send_code_request(phone)
+            session = client.session.save()
+            await client.disconnect()
+            return session, result.phone_code_hash
+        try:
+            r = loop.run_until_complete(_do())
+            result_data.append(r)
+        except Exception as e:
+            error_data.append(e)
+        finally:
+            loop.close()
+
+    t = threading.Thread(target=run)
+    t.start()
+    t.join(timeout=30)
+    if error_data:
+        raise error_data[0]
+    return result_data[0]
+
 async def send_code(phone):
-    client = TelegramClient(
-        StringSession(),
-        int(st.secrets["TELEGRAM_API_ID"]),
+    return send_code_sync(
+        phone,
+        st.secrets["TELEGRAM_API_ID"],
         st.secrets["TELEGRAM_API_HASH"]
     )
-    await client.connect()
-    result = await client.send_code_request(phone)
-    session = client.session.save()
-    await client.disconnect()
-    return session, result.phone_code_hash
+
+def verify_code_sync(session_string, phone, code, phone_code_hash, api_id, api_hash, password=None):
+    import threading
+    result_data = []
+    error_data = []
+
+    def run():
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        async def _do():
+            client = TelegramClient(StringSession(session_string), int(api_id), api_hash)
+            await client.connect()
+            try:
+                await client.sign_in(phone=phone, code=code, phone_code_hash=phone_code_hash)
+            except SessionPasswordNeededError:
+                if password:
+                    await client.sign_in(password=password)
+                else:
+                    await client.disconnect()
+                    return None, "needs_password"
+            final_session = client.session.save()
+            await client.disconnect()
+            return final_session, "success"
+        try:
+            r = loop.run_until_complete(_do())
+            result_data.append(r)
+        except Exception as e:
+            error_data.append(e)
+        finally:
+            loop.close()
+
+    t = threading.Thread(target=run)
+    t.start()
+    t.join(timeout=30)
+    if error_data:
+        raise error_data[0]
+    return result_data[0]
 
 async def verify_code(session_string, phone, code, phone_code_hash, password=None):
-    client = TelegramClient(
-        StringSession(session_string),
-        int(st.secrets["TELEGRAM_API_ID"]),
-        st.secrets["TELEGRAM_API_HASH"]
+    return verify_code_sync(
+        session_string, phone, code, phone_code_hash,
+        st.secrets["TELEGRAM_API_ID"],
+        st.secrets["TELEGRAM_API_HASH"],
+        password
     )
-    await client.connect()
-    try:
-        await client.sign_in(phone=phone, code=code, phone_code_hash=phone_code_hash)
-    except SessionPasswordNeededError:
-        if password:
-            await client.sign_in(password=password)
-        else:
-            await client.disconnect()
-            return None, "needs_password"
-    final_session = client.session.save()
-    await client.disconnect()
-    return final_session, "success"
 
 def get_messages_for_user_sync(session_string, api_id, api_hash, max_chats=20):
     import threading
