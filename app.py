@@ -229,66 +229,6 @@ if st.session_state.token is None:
 </div>
 """, unsafe_allow_html=True)
 
-        st.markdown("""
-<div style="max-width:360px;margin:0 auto;display:flex;flex-direction:column;gap:10px">
-    <div style="display:flex;align-items:center;gap:10px;margin:4px 0">
-      <div style="flex:1;height:1px;background:rgba(255,255,255,0.06)"></div>
-      <div style="font-size:10px;color:rgba(255,255,255,0.18)">also connect after login</div>
-      <div style="flex:1;height:1px;background:rgba(255,255,255,0.06)"></div>
-    </div>
-
-    <div style="display:flex;align-items:center;gap:14px;padding:13px 18px;border-radius:14px;border:1px solid rgba(34,158,217,0.25);background:rgba(34,158,217,0.08)">
-      <div style="width:38px;height:38px;border-radius:10px;background:rgba(34,158,217,0.18);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        ✈️
-      </div>
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:600;color:#64B5F6">Connect Telegram</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">Connect after Gmail login</div>
-      </div>
-      <span style="color:rgba(34,158,217,0.5);font-size:22px;line-height:1">›</span>
-    </div>
-
-    <div style="opacity:0.3;display:flex;align-items:center;gap:14px;padding:13px 18px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)">
-      <div style="width:38px;height:38px;border-radius:10px;background:rgba(37,211,102,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        💬
-      </div>
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:600;color:#aaa">WhatsApp</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.2);margin-top:2px">Personal messages</div>
-      </div>
-      <span style="font-size:9px;font-weight:700;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.2);padding:3px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.07)">SOON</span>
-    </div>
-
-    <div style="opacity:0.3;display:flex;align-items:center;gap:14px;padding:13px 18px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)">
-      <div style="width:38px;height:38px;border-radius:10px;background:rgba(10,102,194,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        💼
-      </div>
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:600;color:#aaa">LinkedIn</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.2);margin-top:2px">Messages and notifications</div>
-      </div>
-      <span style="font-size:9px;font-weight:700;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.2);padding:3px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.07)">SOON</span>
-    </div>
-
-    <div style="opacity:0.3;display:flex;align-items:center;gap:14px;padding:13px 18px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)">
-      <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        🐦
-      </div>
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:600;color:#aaa">Twitter / X</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.2);margin-top:2px">DMs and mentions</div>
-      </div>
-      <span style="font-size:9px;font-weight:700;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.2);padding:3px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.07)">SOON</span>
-    </div>
-
-  </div>
-
-  <div style="font-size:11px;color:rgba(255,255,255,0.18);text-align:center;margin-top:28px;line-height:1.7">
-    🔒 End-to-end private · Processed by AI only · Never stored
-  </div>
-
-</div>
-""", unsafe_allow_html=True)
         st.link_button("🔐  Continue with Gmail", auth_url, type="primary", use_container_width=True)
 
 else:
