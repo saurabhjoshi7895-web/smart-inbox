@@ -263,14 +263,14 @@ body {{background:transparent}}
 </head>
 <body>
 <div class="wrap">
-  <a href="{auth_url}" class="gmail-btn">
+  <div class="gmail-btn" onclick="window.top.location.href='{auth_url}'">
     <div class="icon" style="background:rgba(234,67,53,0.25)">📧</div>
     <div style="flex:1">
       <div style="font-size:14px;font-weight:700;color:#FF8A7A">Continue with Gmail</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">Required — connects your Google account</div>
     </div>
     <span style="color:rgba(234,67,53,0.7);font-size:22px">›</span>
-  </a>
+  </div>
   <div class="divider"></div>
   <div class="label">also connect after login</div>
   <div class="row" style="border-color:rgba(34,158,217,0.25);background:rgba(34,158,217,0.08)">
