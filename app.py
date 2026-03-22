@@ -154,6 +154,13 @@ section[data-testid="stSidebar"] { background: #111111 !important; }
 .page-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #222; }
 .section-lbl { font-size:9px;font-weight:700;letter-spacing:0.12em;color:#444;margin-bottom:8px;padding-left:4px; }
 .tg-connected { background:#0d1f2d;border:1px solid #1a3a4d;border-radius:10px;padding:10px 12px;font-size:12px;color:#64B5F6;margin-bottom:8px; }
+div[data-testid="stLinkButton"] a {
+    background: rgba(234,67,53,0.15) !important;
+    border: 1px solid rgba(234,67,53,0.4) !important;
+    color: #FF8A7A !important;
+    border-radius: 14px !important;
+    font-weight: 600 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -230,7 +237,7 @@ if st.session_state.token is None:
 
         st.markdown("""
 <div style="max-width:360px;margin:0 auto;display:flex;flex-direction:column;gap:8px">
-<div id="gmail-btn" style="background:rgba(234,67,53,0.15);border:1px solid rgba(234,67,53,0.4);border-radius:14px;padding:15px 18px;display:flex;align-items:center;gap:12px;margin-bottom:4px;cursor:pointer" onclick="window.open('{auth_url}', '_self')">
+<div style="background:rgba(234,67,53,0.15);border:1px solid rgba(234,67,53,0.4);border-radius:14px;padding:15px 18px;display:flex;align-items:center;gap:12px;margin-bottom:4px;cursor:pointer">
 <span style="width:38px;height:38px;background:rgba(234,67,53,0.25);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📧</span>
 <div style="flex:1"><div style="font-size:14px;font-weight:700;color:#FF8A7A">Continue with Gmail</div>
 <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">Required — connects your Google account</div></div>
@@ -302,6 +309,7 @@ else:
         st.session_state.show_gmail = show_gmail
         st.session_state.show_telegram = show_telegram and tg_connected
 
+        st.link_button("📧  Continue with Gmail →", auth_url, type="primary", use_container_width=True)
         st.markdown("""
 <div style="margin:8px 0 8px;opacity:0.3">
     <div style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;color:#666">
