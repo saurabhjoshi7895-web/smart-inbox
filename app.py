@@ -210,7 +210,9 @@ for k, v in [
     ('token',None),('important',[]),('skipped',[]),('total',0),
     ('user_email',''),('user_name',''),('user_pic',''),
     ('show_gmail',True),('show_telegram',True),
-    ('tg_step','idle'),('tg_phone',''),('tg_session_tmp',''),('tg_code_hash','')
+    ('tg_step','idle'),('tg_phone',''),('tg_session_tmp',''),('tg_code_hash',''),
+    ('tg_login_step','idle'),('tg_login_phone',''),('tg_login_session_tmp',''),('tg_login_code_hash',''),
+    ('logged_in_via','')
 ]:
     if k not in st.session_state: st.session_state[k] = v
 
@@ -231,7 +233,7 @@ if 'code' in params and st.session_state.token is None:
     except Exception as e:
         st.error(f"Login failed: {e}")
 
-if st.session_state.token is None:
+if st.session_state.token is None and st.session_state.logged_in_via != 'telegram':
     auth_url = get_auth_url()
     _, col2, _ = st.columns([1,2,1])
     with col2:
@@ -263,6 +265,114 @@ if st.session_state.token is None:
 """, unsafe_allow_html=True)
 
         st.link_button("Continue with Gmail", auth_url, type="primary", use_container_width=True)
+
+        st.markdown("""
+<div style="display:flex;align-items:center;gap:10px;margin:12px 0 8px">
+  <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.25)">or continue with</div>
+  <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
+</div>
+""", unsafe_allow_html=True)
+
+        # Telegram login flow on login page
+        if st.session_state.tg_login_step == 'idle':
+            st.markdown("""
+<div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:14px;border:1px solid rgba(34,158,217,0.3);background:rgba(34,158,217,0.08);margin-bottom:4px">
+  <span style="width:44px;height:44px;background:#229ED9;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+  </span>
+  <div style="flex:1">
+    <div style="font-size:15px;font-weight:700;color:#64B5F6">Continue with Telegram</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.35)">Login using your phone number</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+            phone = st.text_input("Phone number", placeholder="+917895827654", key="tg_login_phone_input", label_visibility="collapsed")
+            if st.button("Send OTP via Telegram", use_container_width=True):
+                if phone:
+                    with st.spinner("Sending OTP..."):
+                        try:
+                            session_tmp, code_hash = asyncio.run(send_code(phone))
+                            st.session_state.tg_login_phone = phone
+                            st.session_state.tg_login_session_tmp = session_tmp
+                            st.session_state.tg_login_code_hash = code_hash
+                            st.session_state.tg_login_step = 'otp'
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+                else:
+                    st.warning("Enter your phone number with country code")
+
+        elif st.session_state.tg_login_step == 'otp':
+            st.success(f"OTP sent to {st.session_state.tg_login_phone}")
+            otp = st.text_input("Enter OTP from Telegram", key="tg_login_otp_input")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Verify OTP", use_container_width=True, type="primary"):
+                    if otp:
+                        with st.spinner("Verifying..."):
+                            try:
+                                final_session, status = asyncio.run(verify_code(
+                                    st.session_state.tg_login_session_tmp,
+                                    st.session_state.tg_login_phone,
+                                    otp,
+                                    st.session_state.tg_login_code_hash
+                                ))
+                                if status == 'needs_password':
+                                    st.session_state.tg_login_step = 'password'
+                                    st.rerun()
+                                elif status == 'success':
+                                    # Save session and log in
+                                    save_telegram_session(
+                                        st.session_state.tg_login_phone,
+                                        final_session,
+                                        st.session_state.tg_login_phone
+                                    )
+                                    st.session_state.user_email = st.session_state.tg_login_phone
+                                    st.session_state.user_name = st.session_state.tg_login_phone
+                                    st.session_state.logged_in_via = 'telegram'
+                                    st.session_state.tg_login_step = 'idle'
+                                    st.rerun()
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+            with col2:
+                if st.button("Back", use_container_width=True):
+                    st.session_state.tg_login_step = 'idle'
+                    st.rerun()
+
+        elif st.session_state.tg_login_step == 'password':
+            st.info("2-step verification required")
+            pwd = st.text_input("Telegram password", type="password", key="tg_login_pwd_input")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Submit", use_container_width=True, type="primary"):
+                    if pwd:
+                        with st.spinner("Verifying..."):
+                            try:
+                                final_session, status = asyncio.run(verify_code(
+                                    st.session_state.tg_login_session_tmp,
+                                    st.session_state.tg_login_phone,
+                                    None,
+                                    st.session_state.tg_login_code_hash,
+                                    password=pwd
+                                ))
+                                if status == 'success':
+                                    save_telegram_session(
+                                        st.session_state.tg_login_phone,
+                                        final_session,
+                                        st.session_state.tg_login_phone
+                                    )
+                                    st.session_state.user_email = st.session_state.tg_login_phone
+                                    st.session_state.user_name = st.session_state.tg_login_phone
+                                    st.session_state.logged_in_via = 'telegram'
+                                    st.session_state.tg_login_step = 'idle'
+                                    st.rerun()
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+            with col2:
+                if st.button("Back", use_container_width=True):
+                    st.session_state.tg_login_step = 'password'
+                    st.rerun()
 
         st.markdown("""
 <div style="display:flex;align-items:center;gap:10px;margin:8px 0 4px">
@@ -462,6 +572,8 @@ else:
             for k in ['token','important','skipped','user_email','user_name','user_pic']:
                 st.session_state[k] = None if k=='token' else '' if k in ['user_email','user_name','user_pic'] else []
             st.session_state.total = 0
+            st.session_state.logged_in_via = ''
+            st.session_state.tg_login_step = 'idle'
             st.rerun()
 
     if not st.session_state.important and st.session_state.total == 0:
