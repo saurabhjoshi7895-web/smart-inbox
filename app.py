@@ -191,7 +191,7 @@ if 'code' in params and st.session_state.token is None:
 
 if st.session_state.token is None:
     auth_url = get_auth_url()
-    col1, col2, col3 = st.columns([1,2,1])
+    _, col2, _ = st.columns([1,2,1])
     with col2:
         st.markdown(f"""
 <div style="background:#0A0A0A;padding:48px 32px 40px;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;min-height:0">
@@ -274,6 +274,8 @@ if st.session_state.token is None:
 """, unsafe_allow_html=True)
 
 
+    st.link_button("📧  Continue with Gmail", auth_url, type="primary", use_container_width=True)
+
 else:
     service = get_gmail_service(st.session_state.token)
     user_email = st.session_state.user_email
@@ -309,7 +311,6 @@ else:
         st.session_state.show_gmail = show_gmail
         st.session_state.show_telegram = show_telegram and tg_connected
 
-        st.link_button("📧  Continue with Gmail →", auth_url, type="primary", use_container_width=True)
         st.markdown("""
 <div style="margin:8px 0 8px;opacity:0.3">
     <div style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;color:#666">
