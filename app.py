@@ -187,7 +187,7 @@ if st.session_state.token is None:
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
         st.markdown(f"""
-<div style="background:#0A0A0A;padding:48px 32px 40px;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;min-height:900px">
+<div style="background:#0A0A0A;padding:48px 32px 40px;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;min-height:0">
 
   <div style="position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:500px;height:400px;background:radial-gradient(ellipse,rgba(234,67,53,0.12) 0%,transparent 65%);pointer-events:none"></div>
 
@@ -207,7 +207,7 @@ if st.session_state.token is None:
     <div style="font-size:13px;color:rgba(255,255,255,0.35);line-height:1.7">Connect Gmail, Telegram and more. Our AI reads everything and shows only what truly needs your attention.</div>
   </div>
 
-  <div style="display:flex;gap:28px;margin-bottom:36px;z-index:1">
+  <div style="display:flex;gap:28px;margin-bottom:20px;z-index:1">
     <div style="text-align:center">
       <div style="font-size:22px;font-weight:800;color:#fff">98%</div>
       <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:3px">Noise filtered</div>
