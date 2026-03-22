@@ -423,14 +423,16 @@ else:
         with col_a:
             st.markdown('<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><div style="width:26px;height:26px;background:#2a1515;border-radius:7px;display:inline-flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="#EA4335"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-.561.289-1.078.766-1.376l10.598-6.547a1.636 1.636 0 0 1 1.272 0l10.598 6.547c.477.298.766.815.766 1.376z"/></svg></div><span style="font-size:13px;font-weight:500;color:#fff">Gmail</span></div>', unsafe_allow_html=True)
         with col_b:
-            show_gmail = st.checkbox("", value=st.session_state.show_gmail, key="cb_gmail")
+            gmail_available = service is not None
+            show_gmail = st.checkbox("", value=st.session_state.show_gmail and gmail_available, key="cb_gmail", disabled=not gmail_available)
 
         col_a, col_b = st.columns([4,1])
         with col_a:
             tg_status = "✅" if tg_connected else "⚪"
             st.markdown(f'<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><div style="width:26px;height:26px;background:#0d1f2d;border-radius:7px;display:inline-flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="#229ED9"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></div><span style="font-size:13px;font-weight:500;color:#fff">Telegram {tg_status}</span></div>', unsafe_allow_html=True)
         with col_b:
-            show_telegram = st.checkbox("", value=st.session_state.show_telegram and tg_connected, key="cb_telegram", disabled=not tg_connected)
+            tg_default = tg_connected and (st.session_state.show_telegram or st.session_state.logged_in_via == 'telegram')
+            show_telegram = st.checkbox("", value=tg_default, key="cb_telegram", disabled=not tg_connected)
 
         st.session_state.show_gmail = show_gmail
         st.session_state.show_telegram = show_telegram and tg_connected
@@ -539,13 +541,17 @@ else:
 
         if st.button("🔄  Fetch Messages", type="primary", use_container_width=True):
             all_messages = []
-            if show_gmail and service:
+
+            # Fetch Gmail if connected
+            if service and show_gmail:
                 with st.spinner("Fetching Gmail..."):
-                    all_messages.extend(get_emails_from_service(service))
-            if st.session_state.show_telegram and tg_connected:
+                    all_messages.extend(get_emails_from_service(service, max_results=20))
+
+            # Fetch Telegram if connected (always fetch if logged in via telegram)
+            if tg_connected and (st.session_state.show_telegram or st.session_state.logged_in_via == 'telegram'):
                 with st.spinner("Fetching Telegram..."):
                     try:
-                        tmsgs = asyncio.run(get_messages_for_user(tg_session_data['session_string']))
+                        tmsgs = asyncio.run(get_messages_for_user(tg_session_data['session_string'], max_chats=20))
                         all_messages.extend(tmsgs)
                     except Exception as e:
                         st.warning(f"Telegram: {e}")
