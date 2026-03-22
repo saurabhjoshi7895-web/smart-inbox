@@ -160,13 +160,16 @@ div[data-testid="stLinkButton"] a {
     color: #FF8A7A !important;
     border-radius: 14px !important;
     font-weight: 700 !important;
-    font-size: 15px !important;
+    font-size: 14px !important;
     padding: 14px 18px !important;
-    text-align: left !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
 }
 div[data-testid="stLinkButton"] a:hover {
-    background: rgba(234,67,53,0.25) !important;
-    border-color: rgba(234,67,53,0.7) !important;
+    background: rgba(234,67,53,0.28) !important;
+    border-color: rgba(234,67,53,0.8) !important;
+    color: #fff !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -198,113 +201,67 @@ if 'code' in params and st.session_state.token is None:
 
 if st.session_state.token is None:
     auth_url = get_auth_url()
-    import streamlit.components.v1 as components
     _, col2, _ = st.columns([1,2,1])
     with col2:
         st.markdown(f"""
-<div style="background:#0A0A0A;padding:48px 32px 40px;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;min-height:0">
-
+<div style="background:#0A0A0A;padding:40px 32px 20px;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden">
   <div style="position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:500px;height:400px;background:radial-gradient(ellipse,rgba(234,67,53,0.12) 0%,transparent 65%);pointer-events:none"></div>
-
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:40px;z-index:1">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:32px;z-index:1">
     <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#EA4335,#FF6B35);display:flex;align-items:center;justify-content:center;flex-shrink:0">
       <svg width="22" height="18" viewBox="0 0 22 18" fill="none"><path d="M1 1L11 10L21 1" stroke="white" stroke-width="2" stroke-linecap="round"/><rect x="1" y="1" width="20" height="16" rx="3" stroke="white" stroke-width="1.5" fill="none"/></svg>
     </div>
     <span style="font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.3px">Smart Inbox</span>
   </div>
-
-  <div style="text-align:center;margin-bottom:32px;z-index:1;max-width:360px">
-    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:5px 14px;font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:20px">
+  <div style="text-align:center;margin-bottom:24px;z-index:1;max-width:360px">
+    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:5px 14px;font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:16px">
       <div style="width:6px;height:6px;border-radius:50%;background:#4CAF50;flex-shrink:0"></div>
       AI-powered · only what matters
     </div>
-    <div style="font-size:36px;font-weight:800;color:#fff;line-height:1.1;letter-spacing:-1px;margin-bottom:14px">One inbox.<br><span style="background:linear-gradient(135deg,#EA4335,#FF8A65);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Zero noise.</span></div>
+    <div style="font-size:34px;font-weight:800;color:#fff;line-height:1.1;letter-spacing:-1px;margin-bottom:12px">One inbox.<br><span style="background:linear-gradient(135deg,#EA4335,#FF8A65);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Zero noise.</span></div>
     <div style="font-size:13px;color:rgba(255,255,255,0.35);line-height:1.7">Connect Gmail, Telegram and more. Our AI reads everything and shows only what truly needs your attention.</div>
   </div>
-
-  <div style="display:flex;gap:28px;margin-bottom:12px;z-index:1">
-    <div style="text-align:center">
-      <div style="font-size:22px;font-weight:800;color:#fff">98%</div>
-      <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:3px">Noise filtered</div>
-    </div>
+  <div style="display:flex;gap:28px;margin-bottom:20px;z-index:1">
+    <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#fff">98%</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:3px">Noise filtered</div></div>
     <div style="width:1px;background:rgba(255,255,255,0.06)"></div>
-    <div style="text-align:center">
-      <div style="font-size:22px;font-weight:800;color:#fff">5+</div>
-      <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:3px">Platforms</div>
-    </div>
+    <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#fff">5+</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:3px">Platforms</div></div>
     <div style="width:1px;background:rgba(255,255,255,0.06)"></div>
-    <div style="text-align:center">
-      <div style="font-size:22px;font-weight:800;color:#fff">AI</div>
-      <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:3px">Powered</div>
-    </div>
-  </div>
-
+    <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#fff">AI</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:3px">Powered</div></div>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
-        components.html(f"""
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-* {{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}}
-body {{background:transparent}}
-.wrap {{max-width:360px;margin:0 auto;display:flex;flex-direction:column;gap:8px}}
-.gmail-btn {{background:rgba(234,67,53,0.15);border:1px solid rgba(234,67,53,0.5);border-radius:14px;padding:15px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;text-decoration:none}}
-.gmail-btn:hover {{background:rgba(234,67,53,0.25)}}
-.icon {{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}}
-.row {{display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}}
-.divider {{height:1px;background:rgba(255,255,255,0.06);margin:4px 0}}
-.label {{font-size:10px;color:rgba(255,255,255,0.3);text-align:center;margin-bottom:4px}}
-.soon {{font-size:10px;color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.1);padding:2px 8px;border-radius:8px;margin-left:auto}}
-.footer {{text-align:center;font-size:11px;color:rgba(255,255,255,0.2);margin-top:8px}}
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="gmail-btn" onclick="window.top.location.href='{auth_url}'">
-    <div class="icon" style="background:rgba(234,67,53,0.25)">📧</div>
-    <div style="flex:1">
-      <div style="font-size:14px;font-weight:700;color:#FF8A7A">Continue with Gmail</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">Required — connects your Google account</div>
-    </div>
-    <span style="color:rgba(234,67,53,0.7);font-size:22px">›</span>
-  </div>
-  <div class="divider"></div>
-  <div class="label">also connect after login</div>
-  <div class="row" style="border-color:rgba(34,158,217,0.25);background:rgba(34,158,217,0.08)">
-    <div class="icon" style="background:rgba(34,158,217,0.2)">✈️</div>
-    <div style="flex:1">
-      <div style="font-size:14px;font-weight:600;color:#64B5F6">Connect Telegram</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.3)">Connect after Gmail login</div>
-    </div>
+        st.link_button("📧  Continue with Gmail — Required", auth_url, type="primary", use_container_width=True)
+
+        st.markdown("""
+<div style="display:flex;align-items:center;gap:10px;margin:8px 0 4px">
+  <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.25)">also connect after login</div>
+  <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:#0A0A0A;padding:0 0 20px">
+  <div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:14px;border:1px solid rgba(34,158,217,0.25);background:rgba(34,158,217,0.08)">
+    <span style="width:38px;height:38px;background:rgba(34,158,217,0.2);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">✈️</span>
+    <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#64B5F6">Connect Telegram</div><div style="font-size:11px;color:rgba(255,255,255,0.3)">Connect after Gmail login</div></div>
     <span style="color:rgba(34,158,217,0.5);font-size:20px">›</span>
   </div>
-  <div class="row" style="opacity:0.4">
-    <div class="icon" style="background:rgba(37,211,102,0.15)">💬</div>
-    <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#aaa">WhatsApp</div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.2)">Personal messages</div></div>
-    <span class="soon">SOON</span>
+  <div style="opacity:0.35;display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)">
+    <span style="width:38px;height:38px;background:rgba(37,211,102,0.12);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">💬</span>
+    <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#aaa">WhatsApp</div><div style="font-size:11px;color:rgba(255,255,255,0.2)">Personal messages</div></div>
+    <span style="font-size:10px;color:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.1);padding:2px 8px;border-radius:8px">SOON</span>
   </div>
-  <div class="row" style="opacity:0.4">
-    <div class="icon" style="background:rgba(10,102,194,0.15)">💼</div>
-    <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#aaa">LinkedIn</div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.2)">Messages and notifications</div></div>
-    <span class="soon">SOON</span>
+  <div style="opacity:0.35;display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)">
+    <span style="width:38px;height:38px;background:rgba(10,102,194,0.12);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">💼</span>
+    <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#aaa">LinkedIn</div><div style="font-size:11px;color:rgba(255,255,255,0.2)">Messages and notifications</div></div>
+    <span style="font-size:10px;color:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.1);padding:2px 8px;border-radius:8px">SOON</span>
   </div>
-  <div class="row" style="opacity:0.4">
-    <div class="icon" style="background:rgba(255,255,255,0.08)">🐦</div>
-    <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#aaa">Twitter / X</div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.2)">DMs and mentions</div></div>
-    <span class="soon">SOON</span>
+  <div style="opacity:0.35;display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)">
+    <span style="width:38px;height:38px;background:rgba(255,255,255,0.06);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🐦</span>
+    <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#aaa">Twitter / X</div><div style="font-size:11px;color:rgba(255,255,255,0.2)">DMs and mentions</div></div>
+    <span style="font-size:10px;color:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.1);padding:2px 8px;border-radius:8px">SOON</span>
   </div>
-  <div class="footer">🔒 End-to-end private · Never stored</div>
+  <div style="text-align:center;font-size:11px;color:rgba(255,255,255,0.18);padding-top:4px">🔒 End-to-end private · Processed by AI only · Never stored</div>
 </div>
-</body>
-</html>
-""", height=420, scrolling=False)
-
+""", unsafe_allow_html=True)
 
 else:
     service = get_gmail_service(st.session_state.token)
