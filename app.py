@@ -414,7 +414,8 @@ else:
             st.session_state.user_name = name
             st.session_state.user_pic = pic
         except Exception as e:
-    
+            pass
+
     user_email = st.session_state.user_email
 
     # Get real name - for telegram login fetch from telegram, for gmail use google name
