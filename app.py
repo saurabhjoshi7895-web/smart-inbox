@@ -230,7 +230,20 @@ if st.session_state.token is None:
 </div>
 """, unsafe_allow_html=True)
 
-        st.link_button("📧  Continue with Gmail — Required", auth_url, type="primary", use_container_width=True)
+        st.markdown(f"""
+<a href="{auth_url}" target="_self" style="text-decoration:none;display:block;margin-bottom:8px">
+  <div style="background:rgba(234,67,53,0.15);border:1px solid rgba(234,67,53,0.35);border-radius:16px;padding:15px 18px;display:flex;align-items:center;gap:14px;cursor:pointer">
+    <div style="width:44px;height:44px;background:rgba(234,67,53,0.25);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <svg width="22" height="18" viewBox="0 0 22 18" fill="none"><path d="M1 1L11 10L21 1" stroke="#FF8A7A" stroke-width="2" stroke-linecap="round"/><rect x="1" y="1" width="20" height="16" rx="3" stroke="#FF8A7A" stroke-width="1.5" fill="none"/></svg>
+    </div>
+    <div style="flex:1">
+      <div style="font-size:15px;font-weight:700;color:#FF8A7A;margin-bottom:2px">Continue with Gmail</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.35)">Required — connects your Google account</div>
+    </div>
+    <span style="color:rgba(234,67,53,0.6);font-size:22px;font-weight:300">›</span>
+  </div>
+</a>
+""", unsafe_allow_html=True)
 
         st.markdown("""
 <div style="display:flex;align-items:center;gap:10px;margin:8px 0 4px">
