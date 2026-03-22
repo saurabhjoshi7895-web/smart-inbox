@@ -403,11 +403,17 @@ if st.session_state.token is None and st.session_state.logged_in_via != 'telegra
 else:
     service = get_gmail_service(st.session_state.token) if st.session_state.token else None
     user_email = st.session_state.user_email
-    user_name = st.session_state.user_name or "User"
+
+    # Get real name - for telegram login fetch from telegram, for gmail use google name
+    if st.session_state.logged_in_via == 'telegram':
+        user_name = st.session_state.tg_login_phone or "Telegram User"
+    else:
+        user_name = st.session_state.user_name or user_email or "User"
+
     initials = ''.join([p[0].upper() for p in user_name.split()[:2]]) if user_name else "??"
+
     # Look up telegram session by email first, then by phone as fallback
     tg_session_data = get_telegram_session(user_email) if user_email else None
-    # If not found by email, try by phone (for users who connected telegram separately)
     if not tg_session_data and st.session_state.tg_login_phone:
         tg_session_data = get_telegram_session(st.session_state.tg_login_phone)
     tg_connected = tg_session_data is not None
@@ -435,8 +441,11 @@ else:
             tg_status = "✅" if tg_connected else "⚪"
             st.markdown(f'<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><div style="width:26px;height:26px;background:#0d1f2d;border-radius:7px;display:inline-flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="#229ED9"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></div><span style="font-size:13px;font-weight:500;color:#fff">Telegram {tg_status}</span></div>', unsafe_allow_html=True)
         with col_b:
-            tg_default = tg_connected and (st.session_state.show_telegram or st.session_state.logged_in_via == 'telegram')
-            show_telegram = st.checkbox("", value=tg_default, key="cb_telegram", disabled=not tg_connected)
+            # Auto-check telegram if connected, regardless of login method
+            if tg_connected and 'cb_telegram_initialized' not in st.session_state:
+                st.session_state.show_telegram = True
+                st.session_state.cb_telegram_initialized = True
+            show_telegram = st.checkbox("", value=st.session_state.show_telegram and tg_connected, key="cb_telegram", disabled=not tg_connected)
 
         st.session_state.show_gmail = show_gmail
         st.session_state.show_telegram = show_telegram and tg_connected
@@ -463,7 +472,7 @@ else:
         if not tg_connected:
             st.markdown('<div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:8px">Connect Telegram</div>', unsafe_allow_html=True)
             if st.session_state.tg_step == 'idle':
-                phone = st.text_input("Phone number", placeholder="+917895827654", key="tg_phone_input")
+                phone = st.text_input("Phone number", placeholder="+91 Enter your number", key="tg_phone_input", value="")
                 if st.button("Send OTP", use_container_width=True):
                     if phone:
                         with st.spinner("Sending OTP..."):
@@ -551,8 +560,8 @@ else:
                 with st.spinner("Fetching Gmail..."):
                     all_messages.extend(get_emails_from_service(service, max_results=20))
 
-            # Fetch Telegram if connected (always fetch if logged in via telegram)
-            if tg_connected and (st.session_state.show_telegram or st.session_state.logged_in_via == 'telegram'):
+            # Fetch Telegram if connected and checkbox is checked
+            if tg_connected and show_telegram:
                 with st.spinner("Fetching Telegram..."):
                     try:
                         tmsgs = get_messages_for_user_sync(
@@ -563,9 +572,7 @@ else:
                         )
                         all_messages.extend(tmsgs)
                     except Exception as e:
-                        import traceback
                         st.error(f"Telegram error: {e}")
-                        st.error(traceback.format_exc())
 
             if all_messages:
                 imp, skp = [], []
