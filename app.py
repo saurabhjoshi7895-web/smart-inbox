@@ -153,28 +153,6 @@ section[data-testid="stSidebar"] { background: #111111 !important; }
 .filtered-box { background:#111;border:1px dashed #333;border-radius:12px;padding:14px;font-size:13px;color:#555;text-align:center;margin-top:8px; }
 .page-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #222; }
 .section-lbl { font-size:9px;font-weight:700;letter-spacing:0.12em;color:#444;margin-bottom:8px;padding-left:4px; }
-.gmail-card-overlay {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 15px 18px;
-    border-radius: 14px;
-    border: 1px solid rgba(234,67,53,0.5);
-    background: rgba(234,67,53,0.15);
-    margin-bottom: 8px;
-}
-.gmail-card-overlay:hover {
-    background: rgba(234,67,53,0.25);
-    border-color: rgba(234,67,53,0.7);
-}
-div[data-testid="stLinkButton"] {
-    position: relative !important;
-    margin-top: -68px !important;
-    opacity: 0 !important;
-    z-index: 2 !important;
-    height: 60px !important;
-}
 .tg-connected { background:#0d1f2d;border:1px solid #1a3a4d;border-radius:10px;padding:10px 12px;font-size:12px;color:#64B5F6;margin-bottom:8px; }
 div[data-testid="stLinkButton"] a {
     background: rgba(234,67,53,0.15) !important;
