@@ -207,7 +207,7 @@ if st.session_state.token is None:
     <div style="font-size:13px;color:rgba(255,255,255,0.35);line-height:1.7">Connect Gmail, Telegram and more. Our AI reads everything and shows only what truly needs your attention.</div>
   </div>
 
-  <div style="display:flex;gap:28px;margin-bottom:20px;z-index:1">
+  <div style="display:flex;gap:28px;margin-bottom:12px;z-index:1">
     <div style="text-align:center">
       <div style="font-size:22px;font-weight:800;color:#fff">98%</div>
       <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:3px">Noise filtered</div>
@@ -230,7 +230,13 @@ if st.session_state.token is None:
 
         st.markdown("""
 <div style="max-width:360px;margin:0 auto;display:flex;flex-direction:column;gap:8px">
-<div style="height:1px;background:rgba(255,255,255,0.06);margin:8px 0"></div>
+<div style="background:rgba(234,67,53,0.15);border:1px solid rgba(234,67,53,0.4);border-radius:14px;padding:15px 18px;display:flex;align-items:center;gap:12px;margin-bottom:4px">
+<span style="width:38px;height:38px;background:rgba(234,67,53,0.25);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📧</span>
+<div style="flex:1"><div style="font-size:14px;font-weight:700;color:#FF8A7A">Continue with Gmail</div>
+<div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">Required — connects your Google account</div></div>
+<span style="color:rgba(234,67,53,0.7);font-size:22px">›</span>
+</div>
+<div style="height:1px;background:rgba(255,255,255,0.06);margin:4px 0"></div>
 <div style="text-align:center;font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:4px">also connect after login</div>
 <div style="background:rgba(34,158,217,0.08);border:1px solid rgba(34,158,217,0.25);border-radius:14px;padding:13px 18px;display:flex;align-items:center;gap:12px">
 <span style="font-size:20px">✈️</span>
