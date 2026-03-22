@@ -17,7 +17,7 @@ def save_telegram_session(user_email, session_string, phone):
         "user_email": user_email,
         "session_string": session_string,
         "phone": phone
-    }).execute()
+    }, on_conflict="user_email").execute()
 
 def get_telegram_session(user_email):
     supabase = get_supabase()
