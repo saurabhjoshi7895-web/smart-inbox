@@ -14,7 +14,7 @@ from telegram_auth import (
     get_messages_for_user_sync
 )
 
-SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
+SCOPES = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile'
 
 def get_client():
     return anthropic.Anthropic(api_key=st.secrets.get("ANTHROPIC_API_KEY", ""))
