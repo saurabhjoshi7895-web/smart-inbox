@@ -357,7 +357,7 @@ if st.session_state.token is None and st.session_state.logged_in_via != 'telegra
                                     None,
                                     st.session_state.tg_login_code_hash,
                                     password=pwd
-                                ))
+                                )
                                 if status == 'success':
                                     save_telegram_session(
                                         st.session_state.tg_login_phone,
