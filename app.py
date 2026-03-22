@@ -416,7 +416,9 @@ else:
 
     # Look up telegram session by email first, then by phone as fallback
     tg_session_data = get_telegram_session(user_email) if user_email else None
-    st.sidebar.write(f"DEBUG: looking up '{user_email}', found: {tg_session_data is not None}")
+    st.sidebar.write(f"DEBUG email: '{user_email}'")
+    st.sidebar.write(f"DEBUG token exists: {st.session_state.token is not None}")
+    st.sidebar.write(f"DEBUG logged_in_via: '{st.session_state.logged_in_via}'")
     if not tg_session_data and st.session_state.tg_login_phone:
         tg_session_data = get_telegram_session(st.session_state.tg_login_phone)
     tg_connected = tg_session_data is not None
