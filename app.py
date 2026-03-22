@@ -404,6 +404,17 @@ if st.session_state.token is None and st.session_state.logged_in_via != 'telegra
 
 else:
     service = get_gmail_service(st.session_state.token) if st.session_state.token else None
+    
+    # Fix: if token exists but email is empty, fetch email from Google now
+    if st.session_state.token and not st.session_state.user_email:
+        try:
+            email, name, pic = get_user_info(st.session_state.token)
+            st.session_state.user_email = email
+            st.session_state.user_name = name
+            st.session_state.user_pic = pic
+        except:
+            pass
+    
     user_email = st.session_state.user_email
 
     # Get real name - for telegram login fetch from telegram, for gmail use google name
@@ -416,9 +427,7 @@ else:
 
     # Look up telegram session by email first, then by phone as fallback
     tg_session_data = get_telegram_session(user_email) if user_email else None
-    st.sidebar.write(f"DEBUG email: '{user_email}'")
-    st.sidebar.write(f"DEBUG token exists: {st.session_state.token is not None}")
-    st.sidebar.write(f"DEBUG logged_in_via: '{st.session_state.logged_in_via}'")
+
     if not tg_session_data and st.session_state.tg_login_phone:
         tg_session_data = get_telegram_session(st.session_state.tg_login_phone)
     tg_connected = tg_session_data is not None
