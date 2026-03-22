@@ -49,7 +49,8 @@ def get_user_info(token):
         headers={'Authorization': f'Bearer {token["access_token"]}'}
     )
     d = r.json()
-    return d.get('email',''), d.get('name',''), d.get('picture','')
+    email = d.get('email','') or d.get('emails', [{}])[0].get('value','') if isinstance(d.get('emails'), list) else d.get('email','')
+    return email, d.get('name',''), d.get('picture','')
 
 def classify_email(email):
     client = get_client()
@@ -412,12 +413,9 @@ else:
             st.session_state.user_email = email
             st.session_state.user_name = name
             st.session_state.user_pic = pic
-            st.sidebar.write(f"FETCHED EMAIL: {email}")
         except Exception as e:
-            st.sidebar.write(f"EMAIL FETCH ERROR: {e}")
     
     user_email = st.session_state.user_email
-    st.sidebar.write(f"EMAIL NOW: {user_email}")
 
     # Get real name - for telegram login fetch from telegram, for gmail use google name
     if st.session_state.logged_in_via == 'telegram':
