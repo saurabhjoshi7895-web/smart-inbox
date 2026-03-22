@@ -156,19 +156,51 @@ section[data-testid="stSidebar"] { background: #111111 !important; }
 .tg-connected { background:#0d1f2d;border:1px solid #1a3a4d;border-radius:10px;padding:10px 12px;font-size:12px;color:#64B5F6;margin-bottom:8px; }
 div[data-testid="stLinkButton"] a {
     background: rgba(234,67,53,0.15) !important;
-    border: 1px solid rgba(234,67,53,0.5) !important;
+    border: 1px solid rgba(234,67,53,0.35) !important;
     color: #FF8A7A !important;
-    border-radius: 14px !important;
+    border-radius: 16px !important;
     font-weight: 700 !important;
-    font-size: 14px !important;
-    padding: 14px 18px !important;
+    font-size: 15px !important;
+    padding: 15px 18px !important;
     display: flex !important;
     align-items: center !important;
-    gap: 10px !important;
+    gap: 14px !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+}
+div[data-testid="stLinkButton"] p {
+    display: none !important;
+}
+div[data-testid="stLinkButton"] a::after {
+    content: "Required — connects your Google account" !important;
+    display: block !important;
+    font-size: 11px !important;
+    font-weight: 400 !important;
+    color: rgba(255,255,255,0.35) !important;
+    margin-top: 2px !important;
+    position: absolute !important;
+    left: 80px !important;
+    top: 28px !important;
+}
+div[data-testid="stLinkButton"] a {
+    position: relative !important;
+    min-height: 74px !important;
+}
+div[data-testid="stLinkButton"] a::before {
+    content: "" !important;
+    width: 44px !important;
+    height: 44px !important;
+    background: rgba(234,67,53,0.25) !important;
+    border-radius: 12px !important;
+    display: inline-flex !important;
+    flex-shrink: 0 !important;
+    background-image: url("data:image/svg+xml,%3Csvg width='22' height='18' viewBox='0 0 22 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L11 10L21 1' stroke='%23FF8A7A' stroke-width='2' stroke-linecap='round'/%3E%3Crect x='1' y='1' width='20' height='16' rx='3' stroke='%23FF8A7A' stroke-width='1.5' fill='none'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
 }
 div[data-testid="stLinkButton"] a:hover {
-    background: rgba(234,67,53,0.28) !important;
-    border-color: rgba(234,67,53,0.8) !important;
+    background: rgba(234,67,53,0.25) !important;
+    border-color: rgba(234,67,53,0.6) !important;
     color: #fff !important;
 }
 </style>
@@ -178,7 +210,9 @@ for k, v in [
     ('token',None),('important',[]),('skipped',[]),('total',0),
     ('user_email',''),('user_name',''),('user_pic',''),
     ('show_gmail',True),('show_telegram',True),
-    ('tg_step','idle'),('tg_phone',''),('tg_session_tmp',''),('tg_code_hash','')
+    ('tg_step','idle'),('tg_phone',''),('tg_session_tmp',''),('tg_code_hash',''),
+    ('tg_login_step','idle'),('tg_login_phone',''),('tg_login_session_tmp',''),('tg_login_code_hash',''),
+    ('logged_in_via','')
 ]:
     if k not in st.session_state: st.session_state[k] = v
 
@@ -199,7 +233,7 @@ if 'code' in params and st.session_state.token is None:
     except Exception as e:
         st.error(f"Login failed: {e}")
 
-if st.session_state.token is None:
+if st.session_state.token is None and st.session_state.logged_in_via != 'telegram':
     auth_url = get_auth_url()
     _, col2, _ = st.columns([1,2,1])
     with col2:
@@ -230,32 +264,122 @@ if st.session_state.token is None:
 </div>
 """, unsafe_allow_html=True)
 
-        st.markdown(f"""
-<a href="{auth_url}" target="_self" style="text-decoration:none;display:block;margin-bottom:8px">
-  <div style="background:rgba(234,67,53,0.15);border:1px solid rgba(234,67,53,0.35);border-radius:16px;padding:15px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all 0.2s">
-    <div style="width:44px;height:44px;background:rgba(234,67,53,0.25);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-      <svg width="22" height="18" viewBox="0 0 22 18" fill="none"><path d="M1 1L11 10L21 1" stroke="#FF8A7A" stroke-width="2" stroke-linecap="round"/><rect x="1" y="1" width="20" height="16" rx="3" stroke="#FF8A7A" stroke-width="1.5" fill="none"/></svg>
-    </div>
-    <div style="flex:1">
-      <div style="font-size:15px;font-weight:700;color:#FF8A7A;margin-bottom:2px">Continue with Gmail</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.35)">Required — connects your Google account</div>
-    </div>
-    <span style="color:rgba(234,67,53,0.6);font-size:22px;font-weight:300">›</span>
-  </div>
-</a>
-""", unsafe_allow_html=True)
+        st.link_button("Continue with Gmail", auth_url, type="primary", use_container_width=True)
 
         st.markdown("""
-<div style="display:flex;align-items:center;gap:10px;margin:8px 0 4px">
+<div style="display:flex;align-items:center;gap:10px;margin:12px 0 8px">
   <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
-  <div style="font-size:10px;color:rgba(255,255,255,0.25)">also connect after login</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.25)">or continue with</div>
   <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
 </div>
+""", unsafe_allow_html=True)
+
+        # Telegram login flow on login page
+        if st.session_state.tg_login_step == 'idle':
+            st.markdown("""
+<div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:14px;border:1px solid rgba(34,158,217,0.3);background:rgba(34,158,217,0.08);margin-bottom:4px">
+  <span style="width:44px;height:44px;background:#229ED9;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+  </span>
+  <div style="flex:1">
+    <div style="font-size:15px;font-weight:700;color:#64B5F6">Continue with Telegram</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.35)">Login using your phone number</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+            phone = st.text_input("Phone number", placeholder="+91 Enter your number", key="tg_login_phone_input", label_visibility="collapsed", value="")
+            if st.button("Send OTP via Telegram", use_container_width=True):
+                if phone:
+                    with st.spinner("Sending OTP..."):
+                        try:
+                            session_tmp, code_hash = asyncio.run(send_code(phone))
+                            st.session_state.tg_login_phone = phone
+                            st.session_state.tg_login_session_tmp = session_tmp
+                            st.session_state.tg_login_code_hash = code_hash
+                            st.session_state.tg_login_step = 'otp'
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+                else:
+                    st.warning("Enter your phone number with country code")
+
+        elif st.session_state.tg_login_step == 'otp':
+            st.success(f"OTP sent to {st.session_state.tg_login_phone}")
+            otp = st.text_input("Enter OTP from Telegram", key="tg_login_otp_input")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Verify OTP", use_container_width=True, type="primary"):
+                    if otp:
+                        with st.spinner("Verifying..."):
+                            try:
+                                final_session, status = asyncio.run(verify_code(
+                                    st.session_state.tg_login_session_tmp,
+                                    st.session_state.tg_login_phone,
+                                    otp,
+                                    st.session_state.tg_login_code_hash
+                                ))
+                                if status == 'needs_password':
+                                    st.session_state.tg_login_step = 'password'
+                                    st.rerun()
+                                elif status == 'success':
+                                    # Save session and log in
+                                    save_telegram_session(
+                                        st.session_state.tg_login_phone,
+                                        final_session,
+                                        st.session_state.tg_login_phone
+                                    )
+                                    st.session_state.user_email = st.session_state.tg_login_phone
+                                    st.session_state.user_name = st.session_state.tg_login_phone
+                                    st.session_state.logged_in_via = 'telegram'
+                                    st.session_state.tg_login_step = 'idle'
+                                    st.rerun()
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+            with col2:
+                if st.button("Back", use_container_width=True):
+                    st.session_state.tg_login_step = 'idle'
+                    st.rerun()
+
+        elif st.session_state.tg_login_step == 'password':
+            st.info("2-step verification required")
+            pwd = st.text_input("Telegram password", type="password", key="tg_login_pwd_input")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Submit", use_container_width=True, type="primary"):
+                    if pwd:
+                        with st.spinner("Verifying..."):
+                            try:
+                                final_session, status = asyncio.run(verify_code(
+                                    st.session_state.tg_login_session_tmp,
+                                    st.session_state.tg_login_phone,
+                                    None,
+                                    st.session_state.tg_login_code_hash,
+                                    password=pwd
+                                ))
+                                if status == 'success':
+                                    save_telegram_session(
+                                        st.session_state.tg_login_phone,
+                                        final_session,
+                                        st.session_state.tg_login_phone
+                                    )
+                                    st.session_state.user_email = st.session_state.tg_login_phone
+                                    st.session_state.user_name = st.session_state.tg_login_phone
+                                    st.session_state.logged_in_via = 'telegram'
+                                    st.session_state.tg_login_step = 'idle'
+                                    st.rerun()
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+            with col2:
+                if st.button("Back", use_container_width=True):
+                    st.session_state.tg_login_step = 'password'
+                    st.rerun()
+
+        st.markdown("""
 <div style="display:flex;flex-direction:column;gap:8px;background:#0A0A0A;padding:0 0 20px">
-  <div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:14px;border:1px solid rgba(34,158,217,0.25);background:rgba(34,158,217,0.08)">
-    <span style="width:38px;height:38px;background:#229ED9;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></span>
-    <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#64B5F6">Connect Telegram</div><div style="font-size:11px;color:rgba(255,255,255,0.3)">Connect after Gmail login</div></div>
-    <span style="color:rgba(34,158,217,0.5);font-size:20px">›</span>
+  <div style="display:flex;align-items:center;gap:10px;margin:4px 0 8px">
+    <div style="flex:1;height:1px;background:rgba(255,255,255,0.06)"></div>
+    <div style="font-size:10px;color:rgba(255,255,255,0.2)">also connect after login</div>
+    <div style="flex:1;height:1px;background:rgba(255,255,255,0.06)"></div>
   </div>
   <div style="opacity:0.35;display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)">
     <span style="width:38px;height:38px;background:#25D366;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg></span>
@@ -277,11 +401,21 @@ if st.session_state.token is None:
 """, unsafe_allow_html=True)
 
 else:
-    service = get_gmail_service(st.session_state.token)
+    service = get_gmail_service(st.session_state.token) if st.session_state.token else None
     user_email = st.session_state.user_email
-    user_name = st.session_state.user_name or "User"
+
+    # Get real name - for telegram login fetch from telegram, for gmail use google name
+    if st.session_state.logged_in_via == 'telegram':
+        user_name = st.session_state.tg_login_phone or "Telegram User"
+    else:
+        user_name = st.session_state.user_name or user_email or "User"
+
     initials = ''.join([p[0].upper() for p in user_name.split()[:2]]) if user_name else "??"
+
+    # Look up telegram session by email first, then by phone as fallback
     tg_session_data = get_telegram_session(user_email) if user_email else None
+    if not tg_session_data and st.session_state.tg_login_phone:
+        tg_session_data = get_telegram_session(st.session_state.tg_login_phone)
     tg_connected = tg_session_data is not None
 
     with st.sidebar:
@@ -299,17 +433,21 @@ else:
         with col_a:
             st.markdown('<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><div style="width:26px;height:26px;background:#2a1515;border-radius:7px;display:inline-flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="#EA4335"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-.561.289-1.078.766-1.376l10.598-6.547a1.636 1.636 0 0 1 1.272 0l10.598 6.547c.477.298.766.815.766 1.376z"/></svg></div><span style="font-size:13px;font-weight:500;color:#fff">Gmail</span></div>', unsafe_allow_html=True)
         with col_b:
-            show_gmail = st.checkbox("", value=st.session_state.show_gmail, key="cb_gmail")
+            gmail_available = service is not None
+            show_gmail = st.checkbox("", value=st.session_state.show_gmail and gmail_available, key="cb_gmail", disabled=not gmail_available)
 
         col_a, col_b = st.columns([4,1])
         with col_a:
             tg_status = "✅" if tg_connected else "⚪"
             st.markdown(f'<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><div style="width:26px;height:26px;background:#0d1f2d;border-radius:7px;display:inline-flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="#229ED9"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></div><span style="font-size:13px;font-weight:500;color:#fff">Telegram {tg_status}</span></div>', unsafe_allow_html=True)
         with col_b:
-            show_telegram = st.checkbox("", value=st.session_state.show_telegram and tg_connected, key="cb_telegram", disabled=not tg_connected)
+            # Auto-check telegram if connected
+            if tg_connected:
+                st.session_state.show_telegram = True
+            show_telegram = st.checkbox("", value=tg_connected, key="cb_telegram", disabled=not tg_connected)
 
         st.session_state.show_gmail = show_gmail
-        st.session_state.show_telegram = show_telegram and tg_connected
+        st.session_state.show_telegram = show_telegram
 
         st.markdown("""
 <div style="margin:8px 0 8px;opacity:0.3">
@@ -333,7 +471,7 @@ else:
         if not tg_connected:
             st.markdown('<div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:8px">Connect Telegram</div>', unsafe_allow_html=True)
             if st.session_state.tg_step == 'idle':
-                phone = st.text_input("Phone number", placeholder="+917895827654", key="tg_phone_input")
+                phone = st.text_input("Phone number", placeholder="+91 Enter your number", key="tg_phone_input", value="")
                 if st.button("Send OTP", use_container_width=True):
                     if phone:
                         with st.spinner("Sending OTP..."):
@@ -415,10 +553,14 @@ else:
 
         if st.button("🔄  Fetch Messages", type="primary", use_container_width=True):
             all_messages = []
-            if show_gmail:
+
+            # Fetch Gmail if connected
+            if service and show_gmail:
                 with st.spinner("Fetching Gmail..."):
-                    all_messages.extend(get_emails_from_service(service))
-            if st.session_state.show_telegram and tg_connected:
+                    all_messages.extend(get_emails_from_service(service, max_results=20))
+
+            # Fetch Telegram if connected and checkbox is checked
+            if tg_connected and show_telegram:
                 with st.spinner("Fetching Telegram..."):
                     try:
                         tmsgs = get_messages_for_user_sync(
@@ -429,7 +571,8 @@ else:
                         )
                         all_messages.extend(tmsgs)
                     except Exception as e:
-                        st.warning(f"Telegram: {e}")
+                        st.error(f"Telegram error: {e}")
+
             if all_messages:
                 imp, skp = [], []
                 prog = st.progress(0)
@@ -448,6 +591,8 @@ else:
             for k in ['token','important','skipped','user_email','user_name','user_pic']:
                 st.session_state[k] = None if k=='token' else '' if k in ['user_email','user_name','user_pic'] else []
             st.session_state.total = 0
+            st.session_state.logged_in_via = ''
+            st.session_state.tg_login_step = 'idle'
             st.rerun()
 
     if not st.session_state.important and st.session_state.total == 0:
