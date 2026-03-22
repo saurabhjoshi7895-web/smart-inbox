@@ -224,7 +224,6 @@ if st.session_state.token is None:
     </div>
   </div>
 
-  <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:360px;z-index:1">
   </div>
 </div>
 """, unsafe_allow_html=True)
