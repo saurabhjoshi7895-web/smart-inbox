@@ -222,8 +222,10 @@ if 'code' in params and st.session_state.token is None:
     try:
         token = exchange_code_for_token(params['code'])
         if 'access_token' in token:
-            st.session_state.token = token
             email, name, pic = get_user_info(token)
+            token['user_email'] = email
+            token['user_name'] = name
+            st.session_state.token = token
             st.session_state.user_email = email
             st.session_state.user_name = name
             st.session_state.user_pic = pic
@@ -409,10 +411,18 @@ else:
     # Fix: if token exists but email is empty, fetch email from Google now
     if st.session_state.token and not st.session_state.user_email:
         try:
-            email, name, pic = get_user_info(st.session_state.token)
-            st.session_state.user_email = email
-            st.session_state.user_name = name
-            st.session_state.user_pic = pic
+            # First try to get from token dict (fast, no API call)
+            if 'user_email' in st.session_state.token:
+                st.session_state.user_email = st.session_state.token['user_email']
+                st.session_state.user_name = st.session_state.token.get('user_name','')
+            else:
+                # Fall back to API call
+                email, name, pic = get_user_info(st.session_state.token)
+                st.session_state.user_email = email
+                st.session_state.user_name = name
+                st.session_state.user_pic = pic
+                st.session_state.token['user_email'] = email
+                st.session_state.token['user_name'] = name
         except Exception as e:
             pass
 
