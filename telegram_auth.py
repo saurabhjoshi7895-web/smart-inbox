@@ -62,45 +62,58 @@ async def verify_code(session_string, phone, code, phone_code_hash, password=Non
     return final_session, "success"
 
 def get_messages_for_user_sync(session_string, api_id, api_hash, max_chats=20):
-    import nest_asyncio
-    nest_asyncio.apply()
-    
-    async def _fetch():
-        client = TelegramClient(
-            StringSession(session_string),
-            int(api_id),
-            api_hash
-        )
-        messages = []
+    import threading
+    result = []
+    error = []
+
+    def run_in_thread():
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        async def _fetch():
+            client = TelegramClient(
+                StringSession(session_string),
+                int(api_id),
+                api_hash
+            )
+            messages = []
+            try:
+                await client.connect()
+                dialogs = await client.get_dialogs(limit=max_chats)
+                skip_senders = ['Telegram', 'BotFather', 'Telegram Notifications']
+                for dialog in dialogs:
+                    if dialog.is_user:
+                        last_message = dialog.message
+                        if last_message and last_message.text:
+                            if dialog.name not in skip_senders:
+                                messages.append({
+                                    'sender': dialog.name,
+                                    'subject': last_message.text[:50],
+                                    'body': last_message.text,
+                                    'source': 'telegram'
+                                })
+                await client.disconnect()
+            except Exception as e:
+                import traceback
+                print(f"Telegram error: {e}")
+                print(traceback.format_exc())
+                error.append(str(e))
+            return messages
+
         try:
-            await client.connect()
-            dialogs = await client.get_dialogs(limit=max_chats)
-            skip_senders = ['Telegram', 'BotFather', 'Telegram Notifications']
-            for dialog in dialogs:
-                if dialog.is_user:
-                    last_message = dialog.message
-                    if last_message and last_message.text:
-                        if dialog.name not in skip_senders:
-                            messages.append({
-                                'sender': dialog.name,
-                                'subject': last_message.text[:50],
-                                'body': last_message.text,
-                                'source': 'telegram'
-                            })
-            await client.disconnect()
-        except Exception as e:
-            import traceback
-            print(f"Telegram error: {e}")
-            print(traceback.format_exc())
-            raise e
-        return messages
+            msgs = loop.run_until_complete(_fetch())
+            result.extend(msgs)
+        finally:
+            loop.close()
+
+    t = threading.Thread(target=run_in_thread)
+    t.start()
+    t.join(timeout=60)
     
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        return loop.run_until_complete(_fetch())
-    finally:
-        loop.close()
+    if error:
+        raise Exception(error[0])
+    return result
 
 async def get_messages_for_user(session_string, max_chats=20):
     return get_messages_for_user_sync(
