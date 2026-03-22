@@ -156,19 +156,33 @@ section[data-testid="stSidebar"] { background: #111111 !important; }
 .tg-connected { background:#0d1f2d;border:1px solid #1a3a4d;border-radius:10px;padding:10px 12px;font-size:12px;color:#64B5F6;margin-bottom:8px; }
 div[data-testid="stLinkButton"] a {
     background: rgba(234,67,53,0.15) !important;
-    border: 1px solid rgba(234,67,53,0.5) !important;
+    border: 1px solid rgba(234,67,53,0.35) !important;
     color: #FF8A7A !important;
-    border-radius: 14px !important;
+    border-radius: 16px !important;
     font-weight: 700 !important;
-    font-size: 14px !important;
-    padding: 14px 18px !important;
+    font-size: 15px !important;
+    padding: 15px 18px !important;
     display: flex !important;
     align-items: center !important;
-    gap: 10px !important;
+    gap: 14px !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+}
+div[data-testid="stLinkButton"] a::before {
+    content: "" !important;
+    width: 44px !important;
+    height: 44px !important;
+    background: rgba(234,67,53,0.25) !important;
+    border-radius: 12px !important;
+    display: inline-flex !important;
+    flex-shrink: 0 !important;
+    background-image: url("data:image/svg+xml,%3Csvg width='22' height='18' viewBox='0 0 22 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L11 10L21 1' stroke='%23FF8A7A' stroke-width='2' stroke-linecap='round'/%3E%3Crect x='1' y='1' width='20' height='16' rx='3' stroke='%23FF8A7A' stroke-width='1.5' fill='none'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
 }
 div[data-testid="stLinkButton"] a:hover {
-    background: rgba(234,67,53,0.28) !important;
-    border-color: rgba(234,67,53,0.8) !important;
+    background: rgba(234,67,53,0.25) !important;
+    border-color: rgba(234,67,53,0.6) !important;
     color: #fff !important;
 }
 </style>
@@ -230,32 +244,7 @@ if st.session_state.token is None:
 </div>
 """, unsafe_allow_html=True)
 
-        components.html(f"""
-<style>
-* {{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}}
-body {{background:#0A0A0A}}
-a {{text-decoration:none}}
-.btn {{display:flex;align-items:center;gap:14px;padding:15px 18px;border-radius:16px;border:1px solid rgba(234,67,53,0.35);background:rgba(234,67,53,0.15);cursor:pointer}}
-.btn:hover {{background:rgba(234,67,53,0.25);border-color:rgba(234,67,53,0.6)}}
-.icon {{width:44px;height:44px;background:rgba(234,67,53,0.25);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}}
-.title {{font-size:15px;font-weight:700;color:#FF8A7A;margin-bottom:2px}}
-.sub {{font-size:12px;color:rgba(255,255,255,0.35)}}
-.arrow {{color:rgba(234,67,53,0.6);font-size:22px;font-weight:300;margin-left:auto}}
-</style>
-<div class="btn" onclick="window.parent.location.href='{auth_url}'">
-  <div class="icon">
-    <svg width="22" height="18" viewBox="0 0 22 18" fill="none">
-      <path d="M1 1L11 10L21 1" stroke="#FF8A7A" stroke-width="2" stroke-linecap="round"/>
-      <rect x="1" y="1" width="20" height="16" rx="3" stroke="#FF8A7A" stroke-width="1.5" fill="none"/>
-    </svg>
-  </div>
-  <div>
-    <div class="title">Continue with Gmail</div>
-    <div class="sub">Required — connects your Google account</div>
-  </div>
-  <div class="arrow">›</div>
-</div>
-""", height=80, scrolling=False)
+        st.link_button("Continue with Gmail", auth_url, type="primary", use_container_width=True)
 
         st.markdown("""
 <div style="display:flex;align-items:center;gap:10px;margin:8px 0 4px">
