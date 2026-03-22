@@ -416,6 +416,7 @@ else:
             pass
     
     user_email = st.session_state.user_email
+    st.sidebar.write(f"EMAIL NOW: {user_email}")
 
     # Get real name - for telegram login fetch from telegram, for gmail use google name
     if st.session_state.logged_in_via == 'telegram':
