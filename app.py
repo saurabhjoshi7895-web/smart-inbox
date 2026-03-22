@@ -412,8 +412,9 @@ else:
             st.session_state.user_email = email
             st.session_state.user_name = name
             st.session_state.user_pic = pic
-        except:
-            pass
+            st.sidebar.write(f"FETCHED EMAIL: {email}")
+        except Exception as e:
+            st.sidebar.write(f"EMAIL FETCH ERROR: {e}")
     
     user_email = st.session_state.user_email
     st.sidebar.write(f"EMAIL NOW: {user_email}")
