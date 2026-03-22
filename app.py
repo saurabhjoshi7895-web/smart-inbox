@@ -405,7 +405,11 @@ else:
     user_email = st.session_state.user_email
     user_name = st.session_state.user_name or "User"
     initials = ''.join([p[0].upper() for p in user_name.split()[:2]]) if user_name else "??"
-    tg_session_data = get_telegram_session(user_email) if user_email else None
+    # When logged in via telegram, look up by phone directly
+    if st.session_state.logged_in_via == 'telegram':
+        tg_session_data = get_telegram_session(st.session_state.tg_login_phone) or get_telegram_session(user_email)
+    else:
+        tg_session_data = get_telegram_session(user_email) if user_email else None
     tg_connected = tg_session_data is not None
 
     with st.sidebar:
