@@ -743,6 +743,38 @@ else:
                 st.session_state.total = len(all_messages)
             st.rerun()
 
+        # Replied / Unread boxes
+        replied = st.session_state.replied_messages
+        unread_count = len(st.session_state.important) - len(replied)
+        replied_count = len(replied)
+
+        st.markdown(f"""
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+    <div style="background:#0d1f15;border:1px solid #1a3a25;border-radius:10px;padding:10px 12px;cursor:pointer;">
+        <div style="font-size:16px;font-weight:700;color:#5DBB8A;">{unread_count}</div>
+        <div style="font-size:10px;color:#3a7a52;margin-top:2px;">Unread</div>
+    </div>
+    <div style="background:#1a1030;border:1px solid #2a1f4a;border-radius:10px;padding:10px 12px;cursor:pointer;">
+        <div style="font-size:16px;font-weight:700;color:#9B7FD4;">{replied_count}</div>
+        <div style="font-size:10px;color:#5a3f8a;margin-top:2px;">Replied</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+        # Show replied conversations
+        if replied:
+            with st.expander(f"💬 Replied ({replied_count})"):
+                for key, r in replied.items():
+                    icon = "📧" if r['source']=='gmail' else "✈️"
+                    source_color = "#FF8A7A" if r['source']=='gmail' else "#64B5F6"
+                    st.markdown(f"""
+<div style="background:#161616;border-radius:8px;padding:8px 10px;margin-bottom:6px;">
+    <div style="font-size:12px;font-weight:600;color:#fff;margin-bottom:2px;">{icon} {r['sender']}</div>
+    <div style="font-size:11px;color:#555;margin-bottom:4px;">{r['subject'][:40]}</div>
+    <div style="font-size:10px;color:{source_color};background:rgba(255,255,255,0.04);padding:4px 6px;border-radius:6px;">You: {r['last_reply'][:50]}...</div>
+</div>
+""", unsafe_allow_html=True)
+
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Logout", use_container_width=True):
             for k in ['token','important','skipped','user_email','user_name','user_pic']:
@@ -750,6 +782,7 @@ else:
             st.session_state.total = 0
             st.session_state.logged_in_via = ''
             st.session_state.tg_login_step = 'idle'
+            st.session_state.replied_messages = {}
             st.rerun()
 
     # ── MAIN CONTENT ──────────────────────────────────────────────
