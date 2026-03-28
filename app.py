@@ -125,6 +125,53 @@ def get_gmail_service(token):
     )
     return build('gmail', 'v1', credentials=creds)
 
+def send_gmail_reply(service, original_msg, reply_text, user_email):
+    import email.mime.text
+    import email.mime.multipart
+    
+    msg = email.mime.multipart.MIMEMultipart()
+    msg['To'] = original_msg['sender']
+    msg['From'] = user_email
+    msg['Subject'] = f"Re: {original_msg.get('subject', '')}"
+    msg.attach(email.mime.text.MIMEText(reply_text, 'plain'))
+    
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+    service.users().messages().send(
+        userId='me',
+        body={'raw': raw}
+    ).execute()
+
+def send_telegram_reply(session_string, api_id, api_hash, sender_name, reply_text):
+    result = []
+    error = []
+
+    def run():
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        async def _do():
+            from telethon import TelegramClient
+            from telethon.sessions import StringSession
+            client = TelegramClient(StringSession(session_string), int(api_id), api_hash)
+            await client.connect()
+            await client.send_message(sender_name, reply_text)
+            await client.disconnect()
+        try:
+            loop.run_until_complete(_do())
+            result.append(True)
+        except Exception as e:
+            error.append(e)
+        finally:
+            loop.close()
+
+    import threading
+    t = threading.Thread(target=run)
+    t.start()
+    t.join(timeout=30)
+    if error:
+        raise error[0]
+    return True
+
 st.set_page_config(page_title="Smart Inbox", page_icon="📬", layout="wide")
 
 st.markdown("""
@@ -213,7 +260,7 @@ for k, v in [
     ('show_gmail',True),('show_telegram',True),
     ('tg_step','idle'),('tg_phone',''),('tg_session_tmp',''),('tg_code_hash',''),
     ('tg_login_step','idle'),('tg_login_phone',''),('tg_login_session_tmp',''),('tg_login_code_hash',''),
-    ('logged_in_via','')
+    ('logged_in_via',''),('reply_to',None),('reply_text','')
 ]:
     if k not in st.session_state: st.session_state[k] = v
 
@@ -690,7 +737,7 @@ else:
         cat_cls = {"work":"c-work","personal":"c-personal","spam":"c-spam","newsletter":"c-newsletter"}
         cat_lbl = {"work":"💼 Work","personal":"👤 Personal","spam":"🚫 Spam","newsletter":"📰 Newsletter"}
 
-        for msg, result in st.session_state.important:
+        for idx, (msg, result) in enumerate(st.session_state.important):
             source = msg.get('source','gmail')
             cat = result.get('category','personal')
             sender = msg['sender'].split('<')[0].strip()[:45]
@@ -717,8 +764,55 @@ else:
     </div>
 </div>""", unsafe_allow_html=True)
 
-            with st.expander("Show full message"):
-                st.text(msg.get('body',''))
+            col_exp, col_reply = st.columns([3,1])
+            with col_exp:
+                with st.expander("Show full message"):
+                    st.text(msg.get('body',''))
+            with col_reply:
+                if st.button("↩️ Reply", key=f"reply_btn_{idx}", use_container_width=True):
+                    if st.session_state.reply_to == idx:
+                        st.session_state.reply_to = None
+                    else:
+                        st.session_state.reply_to = idx
+                        st.session_state.reply_text = ''
+                    st.rerun()
+
+            # Show reply box if this card is selected
+            if st.session_state.reply_to == idx:
+                reply_text = st.text_area(
+                    f"Reply to {sender}",
+                    key=f"reply_area_{idx}",
+                    placeholder="Type your reply here...",
+                    height=100
+                )
+                col_send, col_cancel = st.columns([1,1])
+                with col_send:
+                    if st.button("Send ✉️", key=f"send_{idx}", type="primary", use_container_width=True):
+                        if reply_text:
+                            with st.spinner("Sending..."):
+                                try:
+                                    if source == 'gmail' and service:
+                                        send_gmail_reply(service, msg, reply_text, user_email)
+                                        st.success("✅ Reply sent via Gmail!")
+                                    elif source == 'telegram' and tg_session_data:
+                                        send_telegram_reply(
+                                            tg_session_data['session_string'],
+                                            st.secrets["TELEGRAM_API_ID"],
+                                            st.secrets["TELEGRAM_API_HASH"],
+                                            msg['sender'],
+                                            reply_text
+                                        )
+                                        st.success("✅ Reply sent via Telegram!")
+                                    st.session_state.reply_to = None
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Failed to send: {e}")
+                        else:
+                            st.warning("Type something first!")
+                with col_cancel:
+                    if st.button("Cancel", key=f"cancel_{idx}", use_container_width=True):
+                        st.session_state.reply_to = None
+                        st.rerun()
 
         if st.session_state.skipped:
             st.markdown(f'<div class="filtered-box">🗑️ &nbsp; <strong>{flt}</strong> newsletters, promotions and notifications filtered out</div>', unsafe_allow_html=True)
