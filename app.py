@@ -495,6 +495,13 @@ else:
 
         st.markdown("---")
 
+        # Show Connect Gmail if logged in via Telegram
+        if st.session_state.logged_in_via == 'telegram' and not st.session_state.token:
+            st.markdown('<div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:8px">Connect Gmail</div>', unsafe_allow_html=True)
+            auth_url = get_auth_url()
+            st.link_button("📧 Connect Gmail", auth_url, use_container_width=True)
+            st.markdown("---")
+
         if not tg_connected:
             st.markdown('<div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:8px">Connect Telegram</div>', unsafe_allow_html=True)
             if st.session_state.tg_step == 'idle':
