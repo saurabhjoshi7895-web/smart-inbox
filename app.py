@@ -11,7 +11,7 @@ from urllib.parse import urlencode
 from telegram_auth import (
     send_code_sync, verify_code_sync, save_telegram_session,
     get_telegram_session, delete_telegram_session,
-    get_messages_for_user_sync
+    get_messages_for_user_sync, get_telegram_name_sync
 )
 
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile'

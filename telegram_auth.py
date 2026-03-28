@@ -107,6 +107,39 @@ def verify_code_sync(session_string, phone, code, phone_code_hash, api_id, api_h
         raise error_data[0]
     return result_data[0]
 
+
+def get_telegram_name_sync(session_string, api_id, api_hash):
+    result = []
+    error = []
+
+    def run():
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        async def _do():
+            client = TelegramClient(StringSession(session_string), int(api_id), api_hash)
+            await client.connect()
+            me = await client.get_me()
+            await client.disconnect()
+            if me:
+                name = f"{me.first_name or ''} {me.last_name or ''}".strip()
+                return name or me.username or "Telegram User"
+            return "Telegram User"
+        try:
+            r = loop.run_until_complete(_do())
+            result.append(r)
+        except Exception as e:
+            error.append(e)
+        finally:
+            loop.close()
+
+    t = threading.Thread(target=run)
+    t.start()
+    t.join(timeout=15)
+    if error:
+        raise error[0]
+    return result[0] if result else "Telegram User"
+
 def get_messages_for_user_sync(session_string, api_id, api_hash, max_chats=20):
     result = []
     error = []
