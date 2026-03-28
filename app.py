@@ -774,19 +774,7 @@ else:
                 st.session_state.inbox_view = 'replied'
                 st.rerun()
 
-        # Show replied conversations
-        if replied:
-            with st.expander(f"💬 Replied ({replied_count})"):
-                for key, r in replied.items():
-                    icon = "📧" if r['source']=='gmail' else "✈️"
-                    source_color = "#FF8A7A" if r['source']=='gmail' else "#64B5F6"
-                    st.markdown(f"""
-<div style="background:#161616;border-radius:8px;padding:8px 10px;margin-bottom:6px;">
-    <div style="font-size:12px;font-weight:600;color:#fff;margin-bottom:2px;">{icon} {r['sender']}</div>
-    <div style="font-size:11px;color:#555;margin-bottom:4px;">{r['subject'][:40]}</div>
-    <div style="font-size:10px;color:{source_color};background:rgba(255,255,255,0.04);padding:4px 6px;border-radius:6px;">You: {r['last_reply'][:50]}...</div>
-</div>
-""", unsafe_allow_html=True)
+
 
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Logout", use_container_width=True):
@@ -879,7 +867,10 @@ else:
                 filtered_msgs.append((msg, result))
 
         if not filtered_msgs:
-            st.markdown(f'<div style="text-align:center;padding:40px 0;color:#444;font-size:14px;">No {st.session_state.inbox_filter} messages found</div>', unsafe_allow_html=True)
+            if st.session_state.inbox_view == 'replied':
+                st.markdown('<div style="text-align:center;padding:40px 0;color:#444;font-size:14px;">No replied messages yet</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div style="text-align:center;padding:40px 0;color:#444;font-size:14px;">No {st.session_state.inbox_filter} messages found</div>', unsafe_allow_html=True)
 
         for idx, (msg, result) in enumerate(filtered_msgs):
             source = msg.get('source','gmail')
@@ -890,6 +881,8 @@ else:
             cat_color = "#EA4335" if source=='gmail' else "#229ED9"
             source_label = "via Gmail" if source=='gmail' else "via Telegram"
             reply_color = "#EA4335" if source=='gmail' else "#229ED9"
+            msg_key = f"{source}_{sender}_{subject[:20]}"
+            is_replied = msg_key in st.session_state.replied_messages
 
             st.markdown(f"""
 <div style="background:#111;border:1px solid #222;border-radius:14px;padding:16px;margin-bottom:10px;">
@@ -910,6 +903,29 @@ else:
             <span style="font-size:10px;padding:2px 8px;border-radius:8px;background:{"#1a1030" if cat=="work" else "#0d1f15" if cat=="personal" else "#1f0d0d" if cat=="spam" else "#1f1a0d"};color:{"#9B7FD4" if cat=="work" else "#5DBB8A" if cat=="personal" else "#E57373" if cat=="spam" else "#FFB74D"}">{cat_lbl.get(cat,"Other")}</span>
             <span style="font-size:11px;color:#444;">·</span>
             <span style="font-size:11px;color:#444;">{result["reason"]}</span>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+            # Show conversation thread if replied
+            if is_replied:
+                replied_data = st.session_state.replied_messages[msg_key]
+                st.markdown(f"""
+<div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:10px;padding:12px 14px;margin-top:4px;margin-bottom:4px;">
+    <div style="font-size:10px;color:#444;margin-bottom:8px;letter-spacing:0.05em;">CONVERSATION</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <div style="width:6px;background:#333;border-radius:4px;flex-shrink:0;"></div>
+        <div>
+            <div style="font-size:11px;color:#555;margin-bottom:3px;">{sender}</div>
+            <div style="font-size:12px;color:#aaa;">{replied_data["original"][:120]}...</div>
+        </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+        <div style="width:6px;background:{cat_color};border-radius:4px;flex-shrink:0;opacity:0.6;"></div>
+        <div>
+            <div style="font-size:11px;color:#555;margin-bottom:3px;">You</div>
+            <div style="font-size:12px;color:#fff;">{replied_data["last_reply"]}</div>
         </div>
     </div>
 </div>
