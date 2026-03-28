@@ -343,14 +343,13 @@ if st.session_state.token is None and st.session_state.logged_in_via != 'telegra
                                     st.session_state.tg_login_step = 'password'
                                     st.rerun()
                                 elif status == 'success':
-                                    # Save session and log in
-                                    save_telegram_session(
-                                        st.session_state.tg_login_phone,
-                                        final_session,
-                                        st.session_state.tg_login_phone
-                                    )
+                                    try:
+                                        real_name = get_telegram_name_sync(final_session, st.secrets["TELEGRAM_API_ID"], st.secrets["TELEGRAM_API_HASH"])
+                                    except:
+                                        real_name = st.session_state.tg_login_phone
+                                    save_telegram_session(st.session_state.tg_login_phone, final_session, st.session_state.tg_login_phone)
                                     st.session_state.user_email = st.session_state.tg_login_phone
-                                    st.session_state.user_name = st.session_state.tg_login_phone
+                                    st.session_state.user_name = real_name
                                     st.session_state.logged_in_via = 'telegram'
                                     st.session_state.tg_login_step = 'idle'
                                     st.rerun()
@@ -380,13 +379,13 @@ if st.session_state.token is None and st.session_state.logged_in_via != 'telegra
                                     password=pwd
                                 )
                                 if status == 'success':
-                                    save_telegram_session(
-                                        st.session_state.tg_login_phone,
-                                        final_session,
-                                        st.session_state.tg_login_phone
-                                    )
+                                    try:
+                                        real_name = get_telegram_name_sync(final_session, st.secrets["TELEGRAM_API_ID"], st.secrets["TELEGRAM_API_HASH"])
+                                    except:
+                                        real_name = st.session_state.tg_login_phone
+                                    save_telegram_session(st.session_state.tg_login_phone, final_session, st.session_state.tg_login_phone)
                                     st.session_state.user_email = st.session_state.tg_login_phone
-                                    st.session_state.user_name = st.session_state.tg_login_phone
+                                    st.session_state.user_name = real_name
                                     st.session_state.logged_in_via = 'telegram'
                                     st.session_state.tg_login_step = 'idle'
                                     st.rerun()
