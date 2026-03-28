@@ -229,6 +229,22 @@ if 'code' in params and st.session_state.token is None:
             st.session_state.user_email = email
             st.session_state.user_name = name
             st.session_state.user_pic = pic
+
+            # If user was logged in via Telegram before connecting Gmail,
+            # migrate their Telegram session to their Gmail email
+            if st.session_state.tg_login_phone:
+                old_session = get_telegram_session(st.session_state.tg_login_phone)
+                if old_session:
+                    # Save session under Gmail email
+                    save_telegram_session(
+                        email,
+                        old_session['session_string'],
+                        old_session['phone']
+                    )
+                    # Remove old phone-keyed session
+                    delete_telegram_session(st.session_state.tg_login_phone)
+                st.session_state.logged_in_via = ''
+
             st.query_params.clear()
             st.rerun()
         else:
