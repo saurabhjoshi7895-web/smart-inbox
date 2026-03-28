@@ -602,7 +602,16 @@ else:
                         )
                         all_messages.extend(tmsgs)
                     except Exception as e:
-                        st.error(f"Telegram error: {e}")
+                        error_msg = str(e)
+                        if any(x in error_msg for x in ["key is not registered", "AUTH_KEY", "unauthorized", "SessionExpired"]):
+                            delete_telegram_session(user_email)
+                            st.session_state.token = None
+                            st.session_state.logged_in_via = ''
+                            st.session_state.user_email = ''
+                            st.warning("⚠️ Your Telegram session expired. Please login again.")
+                            st.rerun()
+                        else:
+                            st.error(f"Telegram error: {e}")
 
             if all_messages:
                 imp, skp = [], []
