@@ -154,7 +154,22 @@ def send_telegram_reply(session_string, api_id, api_hash, sender_name, reply_tex
             from telethon.sessions import StringSession
             client = TelegramClient(StringSession(session_string), int(api_id), api_hash)
             await client.connect()
-            await client.send_message(sender_name, reply_text)
+            # Search through dialogs to find the right person by name
+            dialogs = await client.get_dialogs(limit=100)
+            target = None
+            for dialog in dialogs:
+                if dialog.name and dialog.name.lower() == sender_name.lower():
+                    target = dialog.entity
+                    break
+            if target is None:
+                # Try partial match
+                for dialog in dialogs:
+                    if dialog.name and sender_name.lower() in dialog.name.lower():
+                        target = dialog.entity
+                        break
+            if target is None:
+                raise Exception(f"Could not find '{sender_name}' in your Telegram chats")
+            await client.send_message(target, reply_text)
             await client.disconnect()
         try:
             loop.run_until_complete(_do())
