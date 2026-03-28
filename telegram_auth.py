@@ -1,9 +1,9 @@
-import asyncio
 import streamlit as st
 from telethon import TelegramClient
 from telethon.sessions import StringSession
 from telethon.errors import SessionPasswordNeededError
 from supabase import create_client
+import threading
 
 def get_supabase():
     return create_client(
@@ -31,7 +31,6 @@ def delete_telegram_session(user_email):
     supabase.table("telegram_sessions").delete().eq("user_email", user_email).execute()
 
 def send_code_sync(phone, api_id, api_hash):
-    import threading
     result_data = []
     error_data = []
 
@@ -61,15 +60,7 @@ def send_code_sync(phone, api_id, api_hash):
         raise error_data[0]
     return result_data[0]
 
-async def send_code(phone):
-    return send_code_sync(
-        phone,
-        st.secrets["TELEGRAM_API_ID"],
-        st.secrets["TELEGRAM_API_HASH"]
-    )
-
 def verify_code_sync(session_string, phone, code, phone_code_hash, api_id, api_hash, password=None):
-    import threading
     result_data = []
     error_data = []
 
@@ -81,13 +72,23 @@ def verify_code_sync(session_string, phone, code, phone_code_hash, api_id, api_h
             client = TelegramClient(StringSession(session_string), int(api_id), api_hash)
             await client.connect()
             try:
-                await client.sign_in(phone=phone, code=code, phone_code_hash=phone_code_hash)
+                if code:
+                    await client.sign_in(phone=phone, code=code, phone_code_hash=phone_code_hash)
+                if password:
+                    await client.sign_in(password=password)
             except SessionPasswordNeededError:
                 if password:
                     await client.sign_in(password=password)
                 else:
                     await client.disconnect()
                     return None, "needs_password"
+            
+            # Verify we are actually authorized before saving
+            me = await client.get_me()
+            if me is None:
+                await client.disconnect()
+                raise Exception("Login failed - could not verify identity")
+            
             final_session = client.session.save()
             await client.disconnect()
             return final_session, "success"
@@ -106,16 +107,7 @@ def verify_code_sync(session_string, phone, code, phone_code_hash, api_id, api_h
         raise error_data[0]
     return result_data[0]
 
-async def verify_code(session_string, phone, code, phone_code_hash, password=None):
-    return verify_code_sync(
-        session_string, phone, code, phone_code_hash,
-        st.secrets["TELEGRAM_API_ID"],
-        st.secrets["TELEGRAM_API_HASH"],
-        password
-    )
-
 def get_messages_for_user_sync(session_string, api_id, api_hash, max_chats=20):
-    import threading
     result = []
     error = []
 
@@ -133,6 +125,12 @@ def get_messages_for_user_sync(session_string, api_id, api_hash, max_chats=20):
             messages = []
             try:
                 await client.connect()
+                
+                # Verify session is valid first
+                me = await client.get_me()
+                if me is None:
+                    raise Exception("Session invalid - please reconnect Telegram")
+                
                 dialogs = await client.get_dialogs(limit=max_chats)
                 skip_senders = ['Telegram', 'BotFather', 'Telegram Notifications']
                 for dialog in dialogs:
@@ -148,9 +146,6 @@ def get_messages_for_user_sync(session_string, api_id, api_hash, max_chats=20):
                                 })
                 await client.disconnect()
             except Exception as e:
-                import traceback
-                print(f"Telegram error: {e}")
-                print(traceback.format_exc())
                 error.append(str(e))
             return messages
 
@@ -167,11 +162,3 @@ def get_messages_for_user_sync(session_string, api_id, api_hash, max_chats=20):
     if error:
         raise Exception(error[0])
     return result
-
-async def get_messages_for_user(session_string, max_chats=20):
-    return get_messages_for_user_sync(
-        session_string,
-        st.secrets["TELEGRAM_API_ID"],
-        st.secrets["TELEGRAM_API_HASH"],
-        max_chats
-    )
