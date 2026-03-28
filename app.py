@@ -275,7 +275,7 @@ for k, v in [
     ('show_gmail',True),('show_telegram',True),
     ('tg_step','idle'),('tg_phone',''),('tg_session_tmp',''),('tg_code_hash',''),
     ('tg_login_step','idle'),('tg_login_phone',''),('tg_login_session_tmp',''),('tg_login_code_hash',''),
-    ('logged_in_via',''),('reply_to',None),('reply_text','')
+    ('logged_in_via',''),('reply_to',None),('reply_text',''),('replied_messages',{})
 ]:
     if k not in st.session_state: st.session_state[k] = v
 
@@ -536,33 +536,35 @@ else:
 
         # Gmail toggle
         gmail_on = st.session_state.show_gmail and gmail_available
-        gmail_bg = "rgba(234,67,53,0.08)" if gmail_on else "rgba(255,255,255,0.02)"
-        st.markdown(f"""
-<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:{gmail_bg};margin-bottom:6px;">
-    <div style="display:flex;align-items:center;gap:8px;">
-        <div style="width:26px;height:26px;background:#EA4335;border-radius:7px;display:flex;align-items:center;justify-content:center;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-.561.289-1.078.766-1.376l10.598-6.547a1.636 1.636 0 0 1 1.272 0l10.598 6.547c.477.298.766.815.766 1.376z"/></svg>
-        </div>
-        <span style="font-size:13px;color:#fff;">Gmail</span>
+        col_g1, col_g2 = st.columns([4,1])
+        with col_g1:
+            gmail_bg = "rgba(234,67,53,0.08)" if gmail_on else "rgba(255,255,255,0.02)"
+            st.markdown(f"""
+<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:{gmail_bg};">
+    <div style="width:26px;height:26px;background:#EA4335;border-radius:7px;display:flex;align-items:center;justify-content:center;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-.561.289-1.078.766-1.376l10.598-6.547a1.636 1.636 0 0 1 1.272 0l10.598 6.547c.477.298.766.815.766 1.376z"/></svg>
     </div>
+    <span style="font-size:13px;color:#fff;">Gmail</span>
 </div>
 """, unsafe_allow_html=True)
-        show_gmail = st.checkbox("Gmail active", value=gmail_on, key="cb_gmail", disabled=not gmail_available, label_visibility="collapsed")
+        with col_g2:
+            show_gmail = st.checkbox("", value=gmail_on, key="cb_gmail", disabled=not gmail_available)
 
         # Telegram toggle
         tg_on = tg_connected and st.session_state.show_telegram
-        tg_bg = "rgba(34,158,217,0.08)" if tg_on else "rgba(255,255,255,0.02)"
-        st.markdown(f"""
-<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:{tg_bg};margin-bottom:6px;margin-top:-8px;">
-    <div style="display:flex;align-items:center;gap:8px;">
-        <div style="width:26px;height:26px;background:#229ED9;border-radius:7px;display:flex;align-items:center;justify-content:center;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-        </div>
-        <span style="font-size:13px;color:#fff;">Telegram {"✅" if tg_connected else "⚪"}</span>
+        col_t1, col_t2 = st.columns([4,1])
+        with col_t1:
+            tg_bg = "rgba(34,158,217,0.08)" if tg_on else "rgba(255,255,255,0.02)"
+            st.markdown(f"""
+<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:{tg_bg};">
+    <div style="width:26px;height:26px;background:#229ED9;border-radius:7px;display:flex;align-items:center;justify-content:center;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
     </div>
+    <span style="font-size:13px;color:#fff;">Telegram {"✅" if tg_connected else "⚪"}</span>
 </div>
 """, unsafe_allow_html=True)
-        show_telegram = st.checkbox("Telegram active", value=tg_on, key="cb_telegram", disabled=not tg_connected, label_visibility="collapsed")
+        with col_t2:
+            show_telegram = st.checkbox("", value=tg_on, key="cb_telegram", disabled=not tg_connected)
 
         # Soon platforms
         st.markdown("""
@@ -887,6 +889,15 @@ else:
                                             reply_text
                                         )
                                         st.success("✅ Reply sent via Telegram!")
+                                    # Track replied message
+                                    msg_key = f"{source}_{sender}_{subject[:20]}"
+                                    st.session_state.replied_messages[msg_key] = {
+                                        'sender': sender,
+                                        'source': source,
+                                        'subject': subject,
+                                        'last_reply': reply_text,
+                                        'original': msg.get('body','')[:100]
+                                    }
                                     st.session_state.reply_to = None
                                     st.rerun()
                                 except Exception as e:
