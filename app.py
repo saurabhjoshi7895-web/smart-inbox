@@ -359,6 +359,8 @@ if st.session_state.token is None and st.session_state.logged_in_via != 'telegra
                                     st.session_state.tg_login_phone,
                                     None,
                                     st.session_state.tg_login_code_hash,
+                                    st.secrets["TELEGRAM_API_ID"],
+                                    st.secrets["TELEGRAM_API_HASH"],
                                     password=pwd
                                 )
                                 if status == 'success':
