@@ -448,7 +448,7 @@ else:
 
     # Get real name - for telegram login fetch from telegram, for gmail use google name
     if st.session_state.logged_in_via == 'telegram':
-        user_name = st.session_state.tg_login_phone or "Telegram User"
+        user_name = st.session_state.user_name or st.session_state.tg_login_phone or "Telegram User"
     else:
         user_name = st.session_state.user_name or user_email or "User"
 
