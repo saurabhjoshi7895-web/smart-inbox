@@ -166,11 +166,24 @@ def get_messages_for_user_sync(session_string, api_id, api_hash, max_chats=20):
                 
                 dialogs = await client.get_dialogs(limit=max_chats)
                 skip_senders = ['Telegram', 'BotFather', 'Telegram Notifications']
+                me = await client.get_me()
+                my_id = me.id if me else None
                 for dialog in dialogs:
                     if dialog.is_user:
                         last_message = dialog.message
                         if last_message and last_message.text:
                             if dialog.name not in skip_senders:
+                                # Check if last message was sent by me
+                                sent_by_me = (last_message.sender_id == my_id)
+                                if sent_by_me:
+                                    # Try to get their last message instead
+                                    async for msg in client.iter_messages(dialog.entity, limit=10):
+                                        if msg.sender_id != my_id and msg.text:
+                                            last_message = msg
+                                            break
+                                    # If all messages are mine, skip this dialog
+                                    if last_message.sender_id == my_id:
+                                        continue
                                 messages.append({
                                     'sender': dialog.name,
                                     'subject': last_message.text[:50],
